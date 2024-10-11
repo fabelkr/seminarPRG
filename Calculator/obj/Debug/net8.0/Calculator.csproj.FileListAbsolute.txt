@@ -1,0 +1,15 @@
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.GeneratedMSBuildEditorConfig.editorconfig
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.AssemblyInfoInputs.cache
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.AssemblyInfo.cs
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.csproj.CoreCompileInputs.cache
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.sourcelink.json
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/bin/Debug/net8.0/Calculator
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/bin/Debug/net8.0/Calculator.deps.json
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/bin/Debug/net8.0/Calculator.runtimeconfig.json
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/bin/Debug/net8.0/Calculator.dll
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/bin/Debug/net8.0/Calculator.pdb
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.dll
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/refint/Calculator.dll
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.pdb
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/Calculator.genruntimeconfig.cache
+/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/Debug/net8.0/ref/Calculator.dll
