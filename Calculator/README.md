@@ -10,7 +10,9 @@ This calculator can also convert throughuout decimal, hexadecimal and binary num
 
 If you wanted to see the proscess, how I was making myself sure if the app works, or not, I recommend you to uncomment all of the commented "//service checkups" code. It may help understanding how this app works.
 
-Also I have one or two "TODO:" in my code. This is the code, I used before but then I optimised it, or simply did not want it. 
+Also I have one or two "TODO:" in my code. This is the code, I used before but then I optimised it, or simply did not want it.
+
+The program can process powers if the input is in correct input fe.: "2pow3", but it cannot be used in te context of an expression, otherwise it doesnt work.
 
 ## Table of Contents
 
@@ -30,6 +32,8 @@ Also you can explicitly enter "ans" or "ANS" instead of any number and the app w
 Enter "pi" or "PI" as your input, to work with number PI.
 
 If you pressed "2" in the start, you are going to convert numbers. I dont think it is nescessary to help with input, bacause it really speaks for itself.
+
+For power -> input: "numberThatIsGonnaBePowered""pow""numberThatIsGonnaPowerTheFirstNumber" => 2pow3 = 8 (It is not possible to use this in an expression. You can simply JUST power numbers OR input an expression without powering numbers.)
 
 ## Features
 
