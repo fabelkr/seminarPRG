@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/simonkresta/Documents/Simon C# PRG/Calculator/Calculator.csproj": {}
+    "/Users/simonkresta/Documents/seminarPRG/Calculator/Calculator.csproj": {}
   },
   "projects": {
-    "/Users/simonkresta/Documents/Simon C# PRG/Calculator/Calculator.csproj": {
+    "/Users/simonkresta/Documents/seminarPRG/Calculator/Calculator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/simonkresta/Documents/Simon C# PRG/Calculator/Calculator.csproj",
+        "projectUniqueName": "/Users/simonkresta/Documents/seminarPRG/Calculator/Calculator.csproj",
         "projectName": "Calculator",
-        "projectPath": "/Users/simonkresta/Documents/Simon C# PRG/Calculator/Calculator.csproj",
+        "projectPath": "/Users/simonkresta/Documents/seminarPRG/Calculator/Calculator.csproj",
         "packagesPath": "/Users/simonkresta/.nuget/packages/",
-        "outputPath": "/Users/simonkresta/Documents/Simon C# PRG/Calculator/obj/",
+        "outputPath": "/Users/simonkresta/Documents/seminarPRG/Calculator/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/simonkresta/.nuget/NuGet/NuGet.Config"
