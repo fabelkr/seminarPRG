@@ -181,20 +181,20 @@ namespace Calculator.Classes
                     int baseIndex = -1;
                     int expIndex = -1;
 
-                    // Find the base number
-                    for (int j = i - 1; j >= 0; j--)
+                    // Find the base number that is gonna be powered
+                    for (int j = i - 1; j == 0; j--)
                     {
-                        if (char.IsDigit(input[j]) || input[j] == '.')
+                        if (char.IsDigit(input[j]))
                         {
                             baseIndex = j;
                             break;
                         }
                     }
 
-                    // Find the exponent number
+                    // Find the number that is gonna be the exponent
                     for (int j = i + 3; j < input.Length; j++)
                     {
-                        if (char.IsDigit(input[j]) || input[j] == '.')
+                        if (char.IsDigit(input[j]))
                         {
                             expIndex = j;
                             break;
@@ -211,14 +211,13 @@ namespace Calculator.Classes
                         input = input.Substring(0, baseIndex) + result.ToString() + input.Substring(expIndex + 1);
                         Console.WriteLine("Updated Input with pow: " + input + "\n");
 
-                        // Re-parse the input
+                        // Restarts the loop to process the updated input or the final result
                         operations = ParseOperations(input);
                         numbers = ParseNumbers(input, logic);
                         i = -1; // Restart the loop
                     }
                 }
             }
-            //here ends github copilot code
 
             double realResult = logic.Calculate(numbers, operations);
             if(operations.All(x => x.Item1 != '(')){
