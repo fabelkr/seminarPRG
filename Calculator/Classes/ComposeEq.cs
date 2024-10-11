@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 
@@ -9,7 +10,6 @@ namespace Calculator.Classes
     {
         double subResult = 0;
 
-        // public string nefunkcniKunda;
 
         private List<(double, int)> ParseNumbers(string input, Logic logic)
         {
@@ -18,7 +18,6 @@ namespace Calculator.Classes
             
             for (int i = 0; i < input.Length; i++)
             {
-
                 if (char.IsDigit(input[i]) || input[i] == '.' || (input[i] == '-' && (i == 0 || "+-*/()".Contains(input[i - 1]))))
                 {
                     if (input[i] == '-')
@@ -173,6 +172,54 @@ namespace Calculator.Classes
                     i = -1;
                 }
             }
+
+            //here starts github copilot code
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (char.ToLower(input[i]) == 'p' && char.ToLower(input[i + 1]) == 'o' && char.ToLower(input[i + 2]) == 'w')
+                {
+                    int baseIndex = -1;
+                    int expIndex = -1;
+
+                    // Find the base number
+                    for (int j = i - 1; j >= 0; j--)
+                    {
+                        if (char.IsDigit(input[j]) || input[j] == '.')
+                        {
+                            baseIndex = j;
+                            break;
+                        }
+                    }
+
+                    // Find the exponent number
+                    for (int j = i + 3; j < input.Length; j++)
+                    {
+                        if (char.IsDigit(input[j]) || input[j] == '.')
+                        {
+                            expIndex = j;
+                            break;
+                        }
+                    }
+
+                    if (baseIndex != -1 && expIndex != -1)
+                    {
+                        double baseNumber = numbers.Find(n => n.Item2 == baseIndex).Item1;
+                        double expNumber = numbers.Find(n => n.Item2 == expIndex).Item1;
+                        double result = Math.Pow(baseNumber, expNumber);
+
+                        // Replace the "pow" operation with the result
+                        input = input.Substring(0, baseIndex) + result.ToString() + input.Substring(expIndex + 1);
+                        Console.WriteLine("Updated Input with pow: " + input + "\n");
+
+                        // Re-parse the input
+                        operations = ParseOperations(input);
+                        numbers = ParseNumbers(input, logic);
+                        i = -1; // Restart the loop
+                    }
+                }
+            }
+            //here ends github copilot code
+
             double realResult = logic.Calculate(numbers, operations);
             if(operations.All(x => x.Item1 != '(')){
                 Console.ForegroundColor = ConsoleColor.Green;
