@@ -16,13 +16,35 @@ namespace _2D_Array_Playground
         static void Main(string[] args)
         {
             //TODO 1: Vytvoř integerové 2D pole velikosti 5 x 5, naplň ho čísly od 1 do 25 a vypiš ho do konzole (5 řádků po 5 číslech).
-
+            int[,] array = new int[5, 5];
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                for (int j = 0; j < array.GetLength(1); j++)
+                {
+                    array[i, j] = i * 5 + j + 1;
+                    Console.Write(array[i, j] + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("\n");
 
             //TODO 2: Vypiš do konzole n-tý řádek pole, kde n určuje proměnná nRow.
             int nRow = 0;
 
+            for (int i = 0; i < array.GetLength(1); i++)
+            {
+                Console.Write(array[nRow, i] + " ");
+            }
+            Console.WriteLine("\n");
+
             //TODO 3: Vypiš do konzole n-tý sloupec pole, kde n určuje proměnná nColumn.
             int nColumn = 0;
+
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                Console.Write(array[i, nColumn] + " " + "\n");
+            }
+                Console.WriteLine();
 
             //TODO 4: Prohoď prvek na souřadnicích [xFirst, yFirst] s prvkem na souřadnicích [xSecond, ySecond] a vypiš celé pole do konzole po prohození.
             //Nápověda: Budeš potřebovat proměnnou navíc, do které si uložíš první z prvků před tím, než ho přepíšeš druhým, abys hodnotou prvního prvku potom mohl přepsat druhý
@@ -40,9 +62,6 @@ namespace _2D_Array_Playground
 
 
             //TODO 8: Otoč pořadí prvků na vedlejší diagonále (z pravého horního rohu do levého dolního rohu) a vypiš celé pole do konzole po otočení.
-
-
-            Console.ReadKey();
         }
     }
 }
