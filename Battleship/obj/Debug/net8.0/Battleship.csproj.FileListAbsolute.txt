@@ -1,0 +1,15 @@
+/Users/simonkresta/Documents/seminarPRG/Battleship/bin/Debug/net8.0/Battleship
+/Users/simonkresta/Documents/seminarPRG/Battleship/bin/Debug/net8.0/Battleship.deps.json
+/Users/simonkresta/Documents/seminarPRG/Battleship/bin/Debug/net8.0/Battleship.runtimeconfig.json
+/Users/simonkresta/Documents/seminarPRG/Battleship/bin/Debug/net8.0/Battleship.dll
+/Users/simonkresta/Documents/seminarPRG/Battleship/bin/Debug/net8.0/Battleship.pdb
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.GeneratedMSBuildEditorConfig.editorconfig
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.AssemblyInfoInputs.cache
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.AssemblyInfo.cs
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.csproj.CoreCompileInputs.cache
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.sourcelink.json
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.dll
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/refint/Battleship.dll
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.pdb
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/Battleship.genruntimeconfig.cache
+/Users/simonkresta/Documents/seminarPRG/Battleship/obj/Debug/net8.0/ref/Battleship.dll
