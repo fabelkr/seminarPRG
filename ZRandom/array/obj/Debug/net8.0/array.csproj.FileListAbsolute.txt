@@ -1,0 +1,15 @@
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/bin/Debug/net8.0/array
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/bin/Debug/net8.0/array.deps.json
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/bin/Debug/net8.0/array.runtimeconfig.json
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/bin/Debug/net8.0/array.dll
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/bin/Debug/net8.0/array.pdb
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.GeneratedMSBuildEditorConfig.editorconfig
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.AssemblyInfoInputs.cache
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.AssemblyInfo.cs
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.csproj.CoreCompileInputs.cache
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.sourcelink.json
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.dll
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/refint/array.dll
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.pdb
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/array.genruntimeconfig.cache
+/Users/simonkresta/Documents/seminarPRG/ZRandom/array/obj/Debug/net8.0/ref/array.dll
