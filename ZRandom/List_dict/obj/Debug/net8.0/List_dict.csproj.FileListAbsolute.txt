@@ -1,0 +1,15 @@
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/bin/Debug/net8.0/List_dict
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/bin/Debug/net8.0/List_dict.deps.json
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/bin/Debug/net8.0/List_dict.runtimeconfig.json
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/bin/Debug/net8.0/List_dict.dll
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/bin/Debug/net8.0/List_dict.pdb
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.GeneratedMSBuildEditorConfig.editorconfig
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.AssemblyInfoInputs.cache
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.AssemblyInfo.cs
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.csproj.CoreCompileInputs.cache
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.sourcelink.json
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.dll
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/refint/List_dict.dll
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.pdb
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/List_dict.genruntimeconfig.cache
+/Users/simonkresta/Documents/seminarPRG/ZRandom/List_dict/obj/Debug/net8.0/ref/List_dict.dll
