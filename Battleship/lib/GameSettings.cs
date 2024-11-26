@@ -238,6 +238,7 @@ namespace App.lib
 
             Console.WriteLine("- Remove ship");
             Console.WriteLine("   - Remove a ship from the list.");
+            Console.WriteLine("   - Note: You cant remove all of the ships\n");
             //TODO: Maji bejt removable, nebo ne?
             Console.WriteLine("   - Note: Default ships are non-removable.\n");
 
@@ -385,31 +386,38 @@ namespace App.lib
         //function that renders menu for adding ships
         private void AddShip()
         {
-            Console.WriteLine("\nIf you add ships, they will be added to both teams and added ships cannot be modificated.\nYou can add each ship only once.");
-            Console.WriteLine("\n1. Yamato (2 X 4) \n2. Iowa (1 X 6) \n3. Boomin Beaver (1 X 1)");
-            switch (Console.ReadLine())
-            {
-                case "1":
-                    AddShipToSpecifications("Yamato");
-                    break;
-                case "2":
-                    AddShipToSpecifications("Iowa");
-                    break;
-                case "3":
-                    AddShipToSpecifications("Boomin Beaver");
-                    break;
-                default:
+            Dictionary<int, string> indexToShipMap = new Dictionary<int, string>();
+                int displayIndex = 1;
+
+                for(int i = 0; i < 8; i++){
+                    Console.WriteLine($"{displayIndex}. Name = {shipNames[i]}, Size = {shipSizes[i, 0]} X {shipSizes[i, 1]}");
+                    indexToShipMap[displayIndex] = shipNames[i];
+                    displayIndex++;
+                }
+
+                //TEST
+                // foreach (var entry in indexToShipMap)
+                // {
+                //     Console.WriteLine($"Index: {entry.Key}, Ship: {entry.Value}");
+                // }
+
+                int selectedIndex;
+                if (int.TryParse(Console.ReadLine(), out selectedIndex) && indexToShipMap.ContainsKey(selectedIndex))
+                {
+                    AddShipToSpecifications(indexToShipMap[selectedIndex]);
+                }
+                else
+                {
                     Console.WriteLine("\nYou selected an invalid option");
-                    break;
-            }
+                }
         }
 
-        //function that adds desired ship to the dictionary
+        //function that adds desired ship to the dictionary based on the indexToShipMap[selectedIndex]
         private void AddShipToSpecifications(string shipType)
         {
             if (shipSpecifications.ContainsKey(shipType))
             {
-                Console.WriteLine($"\nYou have already added {shipType}");
+                Console.WriteLine($"\nYou have already {shipType} included in the list");
                 atom.GameSettingsError();
             }
             else
@@ -420,49 +428,46 @@ namespace App.lib
         }
 
         //function that renders menu for removing ships from the dictionary
+        //It also targets the desired ship, which you want to remove from the dictionary with the selectedIndex and 
         private void RemoveShip(){
-            int shipIndex = 1;
-            foreach (KeyValuePair<string, int[]> ship in shipSpecifications)
             {
-                Console.WriteLine($"{shipIndex}. Name = {ship.Key}, Size = [{string.Join(", ", ship.Value)}]");
-                shipIndex++;
-                Console.ResetColor();
-            }
-            switch(Console.ReadLine()){
-                case "1":
-                    RemoveShipFromSpecifications("Carrier");
-                    break;
-                case "2":
-                    RemoveShipFromSpecifications("Battleship");
-                    break;
-                case "3":
-                    RemoveShipFromSpecifications("Cruiser");
-                    break;
-                case "4":
-                    RemoveShipFromSpecifications("Destroyer");
-                    break;
-                case "5":
-                    RemoveShipFromSpecifications("Submarine");
-                    break;
-                case "6":
-                    RemoveShipFromSpecifications("Yamato");
-                    break;
-                case "7":
-                    RemoveShipFromSpecifications("Iowa");
-                    break;
-                case "8":
-                    RemoveShipFromSpecifications("Boomin Beaver");
-                    break;
-                default:
+                Dictionary<int, string> indexToShipMap = new Dictionary<int, string>();
+                int displayIndex = 1;
+
+                foreach (KeyValuePair<string, int[]> ship in shipSpecifications)
+                {
+                    Console.WriteLine($"{displayIndex}. Name = {ship.Key}, Size = [{string.Join(", ", ship.Value)}]");
+                    indexToShipMap[displayIndex] = ship.Key;
+                    displayIndex++;
+                    Console.ResetColor();
+                }
+
+                //TEST
+                // foreach (var entry in indexToShipMap)
+                // {
+                //     Console.WriteLine($"Index: {entry.Key}, Ship: {entry.Value}");
+                // }
+
+                int selectedIndex;
+                if (int.TryParse(Console.ReadLine(), out selectedIndex) && indexToShipMap.ContainsKey(selectedIndex))
+                {
+                    RemoveShipFromSpecifications(indexToShipMap[selectedIndex]);
+                }
+                else
+                {
                     Console.WriteLine("\nYou selected an invalid option");
-                    break;
+                }
             }
         }
 
         //function that removes desired ship from the dictionary
         private void RemoveShipFromSpecifications(string shipType)
         {
-            if (shipSpecifications.ContainsKey(shipType))
+            if(shipSpecifications.Count == 1){
+                Console.WriteLine($"\nYou can not remove all ships");
+                atom.GameSettingsError();
+            }
+            else if (shipSpecifications.ContainsKey(shipType))
             {
                 shipSpecifications.Remove(shipType);
             }
@@ -811,8 +816,8 @@ namespace App.lib
             {
                 int area = ship.Value[1] * ship.Value[0];
                 shipsArea += ship.Value[0] * ship.Value[1];
-                //testing
-                Console.WriteLine($"Ship: {ship.Key}, Area: {area}, Total Area: {shipsArea}");
+                //TESTING
+                // Console.WriteLine($"Ship: {ship.Key}, Area: {area}, Total Area: {shipsArea}");
             }
             return shipsArea;
         }
@@ -825,8 +830,8 @@ namespace App.lib
             int shipHeight = shipSizes[index, 1];
             int mapW = mapWidth ?? 0;
             int mapH = mapHeight ?? 0;
-            //Testing
-            Console.WriteLine(!((shipWidth > mapW && shipWidth > mapH) || (shipHeight > mapW && shipHeight > mapH)));
+            //TESTING
+            // Console.WriteLine(!((shipWidth > mapW && shipWidth > mapH) || (shipHeight > mapW && shipHeight > mapH)));
             // Return false only if the ship's width or height is greater than both the map's width and height (because the player will be able to rotate the ship later on in the game)
             return !((shipWidth > mapW && shipWidth > mapH) || (shipHeight > mapW && shipHeight > mapH));
         }
@@ -860,8 +865,8 @@ namespace App.lib
             int index = Array.IndexOf(shipNames, shipType);
             int shipWidth = shipSizes[index, 0];
             int shipHeight = shipSizes[index, 1];
-            //Testing
-            Console.WriteLine(!((shipWidth > mapLower) && (shipHeight > mapLower)));
+            //TESTING
+            // Console.WriteLine(!((shipWidth > mapLower) && (shipHeight > mapLower)));
             return !((shipWidth > mapLower) && (shipHeight > mapLower));
         }
 
