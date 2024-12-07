@@ -1,19 +1,21 @@
 using System;
 using System.ComponentModel;
 using System.Data;
+using App.lib.Computer;
+using App.lib.RenderASCII;
 
 namespace App.lib
 {
     public class GameSettings
     {
-        Atomic atom = new Atomic();
         //All nescessary variables declaration
-        bool? mapType = true;
-        int? mapWidth = 10;
-        int? mapHeight = 10;
-        int? mapDiameter = 20;
-        int? difficulty = null;
-        string? colorTheme = null;
+        static bool exit = false;
+        public bool? mapType = true;
+        public int? mapWidth = 10;
+        public int? mapHeight = 10;
+        public int? mapDiameter = 20;
+        public int? difficulty = null;
+        public System.ConsoleColor? colorTheme = null;
 
         string[] weaponNames = [
             "Torpedo",
@@ -27,7 +29,7 @@ namespace App.lib
 
         int[,] weaponImpact;
 
-        string[] shipNames = [
+        public string[] shipNames = [
             "Carrier",
             "Battleship",
             "Cruiser",
@@ -50,9 +52,9 @@ namespace App.lib
         };
 
         //Dictionary for ship specifications (name, size)
-        Dictionary<string, int[]> shipSpecifications;
+        public Dictionary<string, int[]> shipSpecifications;
         //Dictionary for weapon specifications (name, impact)
-        Dictionary<string, int[]> weaponSpecifications;
+        public Dictionary<string, int[]> weaponSpecifications;
 
         //Constructor with ship specifications dictionary in it 
         public GameSettings()
@@ -70,8 +72,8 @@ namespace App.lib
 
         //ridiculously long function for setting up the game
         public void SetNewGame(){
-
-            bool exit = false;
+                Console.Clear();
+                Console.WriteLine("Welcome to the Battleship Game!\n");
 
                 weaponImpact = new int[,] {
                     {1, 1}, //normal
@@ -139,6 +141,9 @@ namespace App.lib
 
         //When called, this function will display the main menu
         private void DisplayMenu(){
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                ExcessGUI.RenderStartGUI();
+                Console.ResetColor();
                 //Console informations UI
                 Console.WriteLine("\n\nSet new game before you start playing\n");
                 //Basic settings UI
@@ -225,12 +230,12 @@ namespace App.lib
             Console.WriteLine("   - Display information about all added weapons.");
             Console.WriteLine("   - Closer explanation of the weapons:\n");
             Console.WriteLine("      - Torpedo: 1 X 1 - fires one projectile to a desired location - unlimited");
-            Console.WriteLine("      - Missile: 1 X 1 - fires one shot from start/end of the row/column and hits the first ship in the row/column if there is any           - every 5 turns recharges");
+            Console.WriteLine("      - Missile: 1 X 1 - fires one shot from start/end of the row/column and hits the first ship in the row/column if there is any - every 5 turns recharges");
             Console.WriteLine("      - Depth Charge: 3 X 3 - fires a projectile to a desired location (epicentre) and hits all ships in the area - single use");
             Console.WriteLine("      - Nuke: 5 X 5 - fires a projectile to a desired location (epicentre) and hits all ships in the area - single use");
-            Console.WriteLine("      - EMP: global impact - prevents enemy from using high tech weapons (Nuke, EMP, Scanner, Carpet Bomber) and will be blinded");
-            Console.WriteLine("      - Scanner: 3 X 3 - scans desired area for enemy ships - rechargeable");
-            Console.WriteLine("      - Carpet Bomber: 1 X 2 - drops bombs in a line - rechargeable\n");
+            Console.WriteLine("      - EMP: global impact - prevents enemy from using high tech weapons (Nuke, EMP, Scanner, Carpet Bomber) and will be blinded for 2 turns - recharges on kill");
+            Console.WriteLine("      - Scanner: 3 X 3 - scans desired area for enemy ships - single use");
+            Console.WriteLine("      - Carpet Bomber: 1 X 2 - drops bombs in a line - recharges on kill\n");
 
             Console.WriteLine("- Modify weapons");
             Console.WriteLine("   - Add or remove weapons.");
@@ -239,11 +244,9 @@ namespace App.lib
             Console.WriteLine("- Remove ship");
             Console.WriteLine("   - Remove a ship from the list.");
             Console.WriteLine("   - Note: You cant remove all of the ships\n");
-            //TODO: Maji bejt removable, nebo ne?
-            Console.WriteLine("   - Note: Default ships are non-removable.\n");
 
             Console.WriteLine("=== END OF HELP SECTION ===");
-            atom.GameSettingsError();
+            Atomic.GameSettingsError();
         }
 
         //function for rednering map options menu
@@ -288,21 +291,21 @@ namespace App.lib
 
         //function for rendering color theme options menu
         private void DisplayColorThemeOptions(){
-            if(colorTheme == "Pink"){
+            if(colorTheme == ConsoleColor.Magenta){
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("4. Pink");
             }
-            else if(colorTheme == "Green"){
+            else if(colorTheme == ConsoleColor.Green){
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("4. Green");
             }
-            else if(colorTheme == "Yellow"){
+            else if(colorTheme == ConsoleColor.Yellow){
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("4. Yellow");
             }
-            else if(colorTheme == "Red"){
+            else if(colorTheme == ConsoleColor.Red){
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("4. Red (already set)");
+                Console.WriteLine("4. Red (already set even though the text is red :)");
             }
             else{
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -320,6 +323,7 @@ namespace App.lib
                 case "1":
                     mapType = true;
                     Console.WriteLine("Enter a map width and height in this order");
+                    //TODO: Add validation for map size (max size cca 50x50)
                     mapWidth = Convert.ToInt32(Console.ReadLine());
                     mapHeight = Convert.ToInt32(Console.ReadLine());
 
@@ -329,14 +333,17 @@ namespace App.lib
                     // Console.WriteLine(CalculateMapArea());
 
                     CompareMapAndShipsArea("map", "all ships", "mapWidth");
+                    Console.Clear();
                     break;
                 case "2":
                     mapType = false;
                     int? mapDiameterTemp = mapDiameter;
+                    //TODO: Add validation for map size (max size cca 50x50)
                     Console.WriteLine("Enter a map diameter");
                     mapDiameter = Convert.ToInt32(Console.ReadLine());
                     CompareMapAndShipsArea("map size lower", "all ships", "mapDiameter", explicitDiameter: mapDiameterTemp);
                     CheckMapSizeValidity(mapDiameterTemp);
+                    Console.Clear();
                     break;
                 default:
                     Console.WriteLine("\nYou selected an invalid option");
@@ -418,7 +425,7 @@ namespace App.lib
             if (shipSpecifications.ContainsKey(shipType))
             {
                 Console.WriteLine($"\nYou have already {shipType} included in the list");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
             }
             else
             {
@@ -447,6 +454,10 @@ namespace App.lib
                 // {
                 //     Console.WriteLine($"Index: {entry.Key}, Ship: {entry.Value}");
                 // }
+                // foreach (var entry in indexToShipMap)
+                // {
+                //     Console.WriteLine($"Index: {entry.Key}, Ship: {entry.Value}");
+                // }
 
                 int selectedIndex;
                 if (int.TryParse(Console.ReadLine(), out selectedIndex) && indexToShipMap.ContainsKey(selectedIndex))
@@ -465,7 +476,7 @@ namespace App.lib
         {
             if(shipSpecifications.Count == 1){
                 Console.WriteLine($"\nYou can not remove all ships");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
             }
             else if (shipSpecifications.ContainsKey(shipType))
             {
@@ -474,7 +485,7 @@ namespace App.lib
             else
             {
                 Console.WriteLine($"\nYou can't remove ships that are not included in the list ({shipType})");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
             }
         }
 
@@ -567,7 +578,7 @@ namespace App.lib
                     //Reasign the old value to the dictionary
                     shipSpecifications[shipType] = new int[] { temp[0], temp[1] };
                     Console.WriteLine($"\nThe new size of {shipType} does not meet the requirements (One dimension of your ship is bigger than both dimensions of the map, or both your ship dimensions are bigger, than the lower map dimension). Reverting to the previous size.");
-                    atom.GameSettingsError();
+                    Atomic.GameSettingsError();
                 }
                 //This part is for the map type circle (it is the same as the previous one, but it did not work without it, so dont touch it :D)
                 else{
@@ -576,7 +587,7 @@ namespace App.lib
                     //Reasign the old value to the dictionary
                     shipSpecifications[shipType] = new int[] { temp[0], temp[1] };
                     Console.WriteLine($"\nThe new size of {shipType} does not meet the requirements (The diameter of the map is smaller than the length of your ship). Reverting to the previous size.");
-                    atom.GameSettingsError();
+                    Atomic.GameSettingsError();
                 }
             }
             else
@@ -593,16 +604,16 @@ namespace App.lib
             switch (Console.ReadLine())
             {
                 case "1":
-                    colorTheme = "Pink";
+                    colorTheme = ConsoleColor.Magenta;
                     break;
                 case "2":
-                    colorTheme = "Green";
+                    colorTheme = ConsoleColor.Green;
                     break;
                 case "3":
-                    colorTheme = "Yellow";
+                    colorTheme = ConsoleColor.Yellow;
                     break;
                 case "4":
-                    colorTheme = "Red";
+                    colorTheme = ConsoleColor.Red;
                     break;
                 default:
                     Console.WriteLine("\nYou selected an invalid option");
@@ -610,19 +621,37 @@ namespace App.lib
             }
         }
 
+        private SetCPU CPU;
         private void StartGame()
         {
-            // You can not start the game if obligatory items unset
+            // Ensure that all obligatory items are set before starting the game
             if (mapType == null || difficulty == null || colorTheme == null)
             {
                 Console.WriteLine("\nYou have to set all obligatory items before you start the game");
-                atom.GameSettingsError();
-                return;
+                if (difficulty == null)
+                {
+                    Console.WriteLine("Please select the difficulty:");
+                    SelectDifficulty();
+                }
+                if (mapType == null)
+                {
+                    Console.WriteLine("Please select the map type:");
+                    SelectMapType();
+                }
+                if (colorTheme == null)
+                {
+                    Console.WriteLine("Please select the color theme:");
+                    SelectColorTheme();
+                }
             }
-            else{
+            else
+            {
                 Console.ForegroundColor = ConsoleColor.Green;
+                exit = true;
+                GameConstructor start = new GameConstructor(this);
+                CPU = new SetCPU(this, start);
+                start.CreateNewGame();
             }
-            Console.WriteLine("Start the game");
         }
 
         //function that renders the ship info
@@ -635,7 +664,7 @@ namespace App.lib
                 shipIndex++;
                 Console.ResetColor();
             }
-            atom.GameSettingsError();
+            Atomic.GameSettingsError();
         }
 
         //function that renders the weapon info
@@ -648,7 +677,7 @@ namespace App.lib
                 weaponIndex++;
                 Console.ResetColor();
             }
-            atom.GameSettingsError();
+            Atomic.GameSettingsError();
         }
 
         //function that renders the weapon modification menu
@@ -702,7 +731,7 @@ namespace App.lib
             if (weaponSpecifications.ContainsKey(weaponType))
             {
                 Console.WriteLine($"\nYou have already added {weaponType}");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
             }
             bool canAddWeapon = true;
             for (int i = 0; i < 6; i++)
@@ -712,7 +741,7 @@ namespace App.lib
                     (weaponImpact[Array.IndexOf(weaponNames, weaponType), 0] > mapDiameter) ||
                     (weaponImpact[Array.IndexOf(weaponNames, weaponType), 1] > mapDiameter)){
                     Console.WriteLine($"\nYou can not add {weaponType} because it is too big for the map (Do not add this wepon, or modify the size of map to add this weapon)");
-                    atom.GameSettingsError();
+                    Atomic.GameSettingsError();
                     canAddWeapon = false;
                     break;
                 }
@@ -724,7 +753,7 @@ namespace App.lib
             else
             {
                 Console.WriteLine("\nOops, something went wrong");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
             }
         }
 
@@ -751,15 +780,15 @@ namespace App.lib
             {
                 case "1":
                     Console.WriteLine("\nTorpedo is non-removeable");
-                    atom.GameSettingsError();
+                    Atomic.GameSettingsError();
                     break;
                 case "2":
                     Console.WriteLine("\nMissile is non-removeable");
-                    atom.GameSettingsError();
+                    Atomic.GameSettingsError();
                     break;
                 case "3":
                     Console.WriteLine("\nDepth Charge is non-removeable");
-                    atom.GameSettingsError();
+                    Atomic.GameSettingsError();
                     break;
                 case "4":
                     RemoveWeaponFromSpecifications("Nuke");
@@ -789,7 +818,7 @@ namespace App.lib
             else
             {
                 Console.WriteLine($"\nYou can't remove weapons that are not included in the list ({weaponType})");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
             }
         }
 
@@ -850,14 +879,14 @@ namespace App.lib
                     mapDiameter = explicitDiameter;
                 }
                 Console.WriteLine($"\nYou can not set a {setter} than the total area of {getter}");
-                atom.GameSettingsError();
+                Atomic.GameSettingsError();
                 return false;
                 mapHeight = mapDiameter;
                 mapWidth = mapDiameter;
             }
             return true;
         }
-
+        //TODO: ship cannot have size in any direction less than 1
         //function that compares the ship dimensions with the map dimensions (It is similar as the CompareMapAndShipsLength function, but it is used for the map type circle and it works, so dont worry about it)
         private bool CompareLogicalDimensions(string shipType)
         {
@@ -881,7 +910,7 @@ namespace App.lib
                         {
                             mapDiameter = mapDiameterTemp;
                             Console.WriteLine($"\nYou can not set a ship bigger than the map diameter");
-                            atom.GameSettingsError();
+                            Atomic.GameSettingsError();
                             return false;
                         }
                 }
