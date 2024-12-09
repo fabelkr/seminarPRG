@@ -323,11 +323,19 @@ namespace App.lib
                 case "1":
                     mapType = true;
                     Console.WriteLine("Enter a map width and height in this order");
-                    //TODO: Add validation for map size (max size cca 50x50)
+
                     mapWidth = Convert.ToInt32(Console.ReadLine());
                     mapHeight = Convert.ToInt32(Console.ReadLine());
 
-                    //dev testing
+                    if (mapHeight >= 50 || mapWidth >= 50)
+                    {
+                        Console.WriteLine("\nYou can not set a map with a dimension higher than 50");
+                        mapHeight = 10;
+                        mapWidth = 10;
+                        Atomic.GameSettingsError();
+                    }
+
+                    //TEST
                     // Console.WriteLine("mw"+mapWidth);
                     // Console.WriteLine("mh"+mapHeight);
                     // Console.WriteLine(CalculateMapArea());
@@ -338,9 +346,17 @@ namespace App.lib
                 case "2":
                     mapType = false;
                     int? mapDiameterTemp = mapDiameter;
-                    //TODO: Add validation for map size (max size cca 50x50)
                     Console.WriteLine("Enter a map diameter");
+
                     mapDiameter = Convert.ToInt32(Console.ReadLine());
+
+                    if (mapDiameter >= 50)
+                    {
+                        Console.WriteLine("\nYou can not set a map with a dimension higher than 50");
+                        mapDiameter = 20;
+                        Atomic.GameSettingsError();
+                    }
+
                     CompareMapAndShipsArea("map size lower", "all ships", "mapDiameter", explicitDiameter: mapDiameterTemp);
                     CheckMapSizeValidity(mapDiameterTemp);
                     Console.Clear();

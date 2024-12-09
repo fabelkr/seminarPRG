@@ -10,7 +10,7 @@ namespace App.lib.Computer
     {
         private GameSettings settings;
         private GameConstructor constructor;
-        private bool?[,] mapCPU;
+        public bool?[,] mapCPU;
 
         // Constructor to initialize the settings and constructor objects
         public SetCPU(GameSettings settings, GameConstructor constructor)
@@ -67,8 +67,8 @@ namespace App.lib.Computer
                 }
             }
             //TEST
-            constructor.PrintMap(ref mapCPU);
-            constructor.PrintMap(ref constructor.map);
+            // constructor.PrintMap(ref mapCPU);
+            // constructor.PrintMap(ref constructor.map);
         }
 
         private void SetCPUCircularCoordinates()

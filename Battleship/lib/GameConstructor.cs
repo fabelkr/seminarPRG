@@ -11,20 +11,28 @@ namespace App.lib
     {
         private Dictionary<string, bool> shipState;
         private Dictionary<string, bool> shipOrientation;
-        private GameSettings settings;
-        string currentAddedShip;
 
         //null = water, false = ship, true = hit
         public bool?[,] map;
+        private bool mapMasking = false;
+
+
+        private bool mapView = false;
+
+        private GameSettings settings;
+        string currentAddedShip;
+
             
         //Dictionary for storing data if there are any coordinates set for the ship
         Dictionary<string, bool> CoordinateIsSet = new Dictionary<string, bool>();
 
+            SetCPU CPU;
         //Constuctor
         public GameConstructor(GameSettings settings)
         {
             this.settings = settings;
             //initialize the shipState dictionary
+            CPU = new SetCPU(settings, this);
             shipState = new Dictionary<string, bool>();
             //Sets the state of each in game included ship to false by default (Not hit)
             foreach (KeyValuePair<string, int[]> ship in settings.shipSpecifications)
@@ -37,12 +45,14 @@ namespace App.lib
             //     Console.WriteLine($"ship: {state.Key}, state: {state.Value}");
             // }
         }
+
         public void CreateNewGame()
         {
             //TEST
             // Console.WriteLine(settings.mapType);
             // Console.WriteLine(settings.mapHeight);
             // Console.WriteLine(settings.mapWidth);
+            GameLogic logic = new GameLogic(settings);
 
             Console.Clear();
             CreateMap();
@@ -69,7 +79,6 @@ namespace App.lib
             {
                 indexOfSelectedShip[i] = settings.shipSpecifications.ElementAt(i - 1).Key;
             }
-            SetCPU CPU = new SetCPU(settings, this);
             while (CoordinateIsSet.ContainsValue(false)){
                 Console.Clear();
                 PrintMap(ref map);
@@ -114,15 +123,14 @@ namespace App.lib
                     Atomic.GameSettingsError();
                 }
             }
-            Console.WriteLine("All chips are placed on the map. The game is ready to start.");
+            Console.WriteLine("All ships are placed on the map. The game is ready to start.");
             Console.WriteLine("Press any key to start the game.");
             Console.ReadKey();
             Console.Clear();
             CPU.GetCPUSet();
-            //TODO: Implement the game logic
-            //TODO: Implement the computer player
+            StartGame();
         }
-        private void CreateMap()
+        public void CreateMap()
         {
             if (settings.mapType == true)
             {
@@ -182,41 +190,59 @@ namespace App.lib
             int height = map.GetLength(0);
             int width = map.GetLength(1);
 
+            // Column coordinates indexing
+            Console.Write("  ");
+            for (int j = 0; j < width; j++)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write($"{j,2}");
+            }
+            Console.ResetColor();
+            Console.WriteLine();
+
             for (int i = 0; i < height; i++)
             {
+                // Row coordinates indexing
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write($"{i,2} ");
+                Console.ResetColor();
+
                 int counter = 0;
                 for (int j = 0; j < width; j++)
                 {
-                    // Check if the point is within the circle (for circular maps)
-                    if (settings.mapType == false && Math.Pow(i - height / 2, 2) + Math.Pow(j - width / 2, 2) > Math.Pow(width / 2, 2))
-                    {
-                        Console.Write("  "); // Print empty space outside the circle
-                    }
-                    else
-                    {
-                        //Water
+                    if(mapMasking == true){
                         Console.ForegroundColor = Atomic.MakeChessboard(counter, i);
-                        if (map[i, j] == null)
-                        {
+                        if(map[i, j] == false || map[i, j] == null || map[i, j] == true){
                             Console.Write("~ ");
                         }
-                        //ship
-                        else if (map[i, j] == false)
+                    }else{
+                        // Check if the point is within the circle (for circular maps)
+                        if (settings.mapType == false && Math.Pow(i - height / 2, 2) + Math.Pow(j - width / 2, 2) > Math.Pow(width / 2, 2))
                         {
-                            Console.ForegroundColor = settings.colorTheme ?? ConsoleColor.White;
-                            //This is how I wanted to render specific pseudonym for each ship type on the map, but it did not work
-                            // Console.Write(Ships.CheckPseudoToRender(currentAddedShip));
-                            Console.Write("S ");
+                            Console.Write("   "); // Print empty space outside the circle
                         }
-                        //hit
-                        else if (map[i, j] == true)
+                        else
                         {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            // Ships.CheckPseudoToRender(currentAddedShip);
-                            Console.Write("X ");
-                            Console.ResetColor();
+                            // Water
+                            Console.ForegroundColor = Atomic.MakeChessboard(counter, i);
+                            if (map[i, j] == null)
+                            {
+                                Console.Write("~ ");
+                            }
+                            // Ship
+                            else if (map[i, j] == false)
+                            {
+                                Console.ForegroundColor = settings.colorTheme ?? ConsoleColor.White;
+                                Console.Write("S ");
+                            }
+                            // Hit
+                            else if (map[i, j] == true)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write("X ");
+                            }
+                            counter++;
                         }
-                        counter++;
                     }
                 }
                 Console.ResetColor();
@@ -226,10 +252,37 @@ namespace App.lib
 
         private void SetShipCoordinates(string shipName, Dictionary<int, string> indexOfSelectedShip, int selectedShip)
         {
-            Console.WriteLine("Enter the starting column (x):");
-            int x = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("Enter the starting row (y):");
-            int y = Convert.ToInt32(Console.ReadLine());
+            int x, y;
+
+            while (true)
+            {
+                Console.WriteLine("Enter the starting column (x):");
+                if (int.TryParse(Console.ReadLine(), out x))
+                {
+                    break;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid input. Please enter a valid number for the column.");
+                    Console.ResetColor();
+                }
+            }
+
+            while (true)
+            {
+                Console.WriteLine("Enter the starting row (y):");
+                if (int.TryParse(Console.ReadLine(), out y))
+                {
+                    break;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid input. Please enter a valid number for the row.");
+                    Console.ResetColor();
+                }
+            }
 
             Console.WriteLine("\nSet the orientation of the ship:\n1. horizontal\n2. vertical");
             bool orientation = true; // Default to horizontal
@@ -342,6 +395,22 @@ namespace App.lib
                     }
                 }
             }
+        }
+
+        private void StartGame()
+        {
+            mapMasking = true;
+            Atomic.StartGameMessage();
+            
+            Console.WriteLine(Atomic.MapViewAnouncement(mapView));
+            PrintMap(ref CPU.mapCPU);
+
+
+            //TEST
+            // if(Console.ReadLine() == "1"){
+            //     mapMasking = false;
+            // }
+            // PrintMap(ref CPU.mapCPU);
         }
     }
 }
