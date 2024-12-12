@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using App.lib.Computer;
@@ -9,13 +10,16 @@ namespace App.lib
 {
     public class GameConstructor
     {
-        private Dictionary<string, bool> shipState;
+        private Dictionary<string, bool[,]> shipState;
         private Dictionary<string, bool> shipOrientation;
 
-        //null = water, false = ship, true = hit
-        public bool?[,] map;
+        //0 = water, 1 = ship, 2 = hit, 3 = sunken ship, 4 = missed shot
+        public int[,] map;
         private bool mapMasking = false;
 
+        int sunkenShipCounter = 0;
+
+        public int selectedWeapon;
 
         private bool mapView = false;
 
@@ -33,11 +37,23 @@ namespace App.lib
             this.settings = settings;
             //initialize the shipState dictionary
             CPU = new SetCPU(settings, this);
-            shipState = new Dictionary<string, bool>();
+            shipState = new Dictionary<string, bool[,]>();
             //Sets the state of each in game included ship to false by default (Not hit)
             foreach (KeyValuePair<string, int[]> ship in settings.shipSpecifications)
             {
-                shipState[ship.Key] = false;
+                bool[,] shipCoordinates = new bool[ship.Value[0], ship.Value[1]];
+
+                // Initialize all coordinates of ship to false (not hit)
+                for (int i = 0; i < ship.Value[0]; i++)
+                {
+                    for (int j = 0; j < ship.Value[1]; j++)
+                    {
+                        shipCoordinates[i, j] = false;
+                    }
+                }
+
+                // Add the ship coordinates and its state to the dictionary
+                shipState[ship.Key] = shipCoordinates;
             }
             //TEST
             // foreach (KeyValuePair<string, bool> state in shipState)
@@ -52,7 +68,6 @@ namespace App.lib
             // Console.WriteLine(settings.mapType);
             // Console.WriteLine(settings.mapHeight);
             // Console.WriteLine(settings.mapWidth);
-            GameLogic logic = new GameLogic(settings);
 
             Console.Clear();
             CreateMap();
@@ -73,12 +88,12 @@ namespace App.lib
             //     Console.ResetColor();
             // }
             Dictionary<int, string> indexOfSelectedShip = new Dictionary<int, string>();
-            //The loop will run until all of the ships are placed on the map
 
             for(int i = 1; i <= settings.shipSpecifications.Count; i++)
             {
                 indexOfSelectedShip[i] = settings.shipSpecifications.ElementAt(i - 1).Key;
             }
+            //The loop will run until all of the ships are placed on the map
             while (CoordinateIsSet.ContainsValue(false)){
                 Console.Clear();
                 PrintMap(ref map);
@@ -145,47 +160,47 @@ namespace App.lib
             }
         }
 
-        public void CreateRectangularMap(ref bool?[,] map)
+        public void CreateRectangularMap(ref int[,] map)
         {
             int width = settings.mapWidth ?? 10;
             int height = settings.mapHeight ?? 10;
 
             // Create 2D array to store the map
             //null = water, false = ship, true = hit
-            map = new bool?[height, width];
+            map = new int[height, width];
 
             // Initialize the map with water ("~") - without ships
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
                 {
-                    map[i, j] = null;
+                    map[i, j] = 0;
                 }
             }
         }
 
-        public void CreateCircularMap(ref bool?[,] map)
+        public void CreateCircularMap(ref int[,] map)
         {
             int diameter = settings.mapDiameter ?? 20;
             int radius = diameter / 2;
 
             // Create 2D array to store the circular map
             //null = water, false = ship, true = hit
-            map = new bool?[diameter, diameter];
+            map = new int[diameter, diameter];
 
             // Initialize the map with water ('~') like it was a square (rendering it as a circle is done in the section below)
             for (int i = 0; i < diameter; i++)
             {
                 for (int j = 0; j < diameter; j++)
                 {
-                    map[i, j] = null;
+                    map[i, j] = 0;
                 }
             }
 
             PrintMap(ref map);
         }
 
-        public void PrintMap(ref bool?[,] map)
+        public void PrintMap(ref int[,] map)
         {
             int height = map.GetLength(0);
             int width = map.GetLength(1);
@@ -195,6 +210,7 @@ namespace App.lib
             for (int j = 0; j < width; j++)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
+                //copilot helped me with the formated output of indexing
                 Console.Write($"{j,2}");
             }
             Console.ResetColor();
@@ -204,6 +220,7 @@ namespace App.lib
             {
                 // Row coordinates indexing
                 Console.ForegroundColor = ConsoleColor.Red;
+                //copilot helped me with the formated output of indexing
                 Console.Write($"{i,2} ");
                 Console.ResetColor();
 
@@ -212,8 +229,18 @@ namespace App.lib
                 {
                     if(mapMasking == true){
                         Console.ForegroundColor = Atomic.MakeChessboard(counter, i);
-                        if(map[i, j] == false || map[i, j] == null || map[i, j] == true){
+                        if(map[i, j] == 1 || map[i, j] == 0){
                             Console.Write("~ ");
+                        }
+                        else if(map[i, j] == 4){
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write("O ");
+                            Console.ResetColor();
+                        }
+                        else if(map[i, j] == 2){
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.Write("X ");
+                            Console.ResetColor();
                         }
                     }else{
                         // Check if the point is within the circle (for circular maps)
@@ -225,21 +252,26 @@ namespace App.lib
                         {
                             // Water
                             Console.ForegroundColor = Atomic.MakeChessboard(counter, i);
-                            if (map[i, j] == null)
+                            if (map[i, j] == 0)
                             {
                                 Console.Write("~ ");
                             }
                             // Ship
-                            else if (map[i, j] == false)
+                            else if (map[i, j] == 1)
                             {
                                 Console.ForegroundColor = settings.colorTheme ?? ConsoleColor.White;
                                 Console.Write("S ");
                             }
                             // Hit
-                            else if (map[i, j] == true)
+                            else if (map[i, j] == 2)
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.Write("X ");
+                            }
+                            else if (map[i, j] == 4)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.Write("O ");
                             }
                             counter++;
                         }
@@ -338,7 +370,7 @@ namespace App.lib
                 {
                     for (int j = 0; j < shipLength; j++)
                     {
-                        if (x + j >= width || y + i >= height || map[y + i, x + j] != null)
+                        if (x + j >= width || y + i >= height || map[y + i, x + j] != 0)
                         {
                             return false; // Overlapping ship found
                         }
@@ -355,7 +387,7 @@ namespace App.lib
                 {
                     for (int j = 0; j < shipWidth; j++)
                     {
-                        if (y + i >= height || x + j >= width || map[y + i, x + j] != null)
+                        if (y + i >= height || x + j >= width || map[y + i, x + j] != 0)
                         {
                             return false; // Overlapping ship found
                         }
@@ -380,7 +412,7 @@ namespace App.lib
                 {
                     for (int j = 0; j < shipLength; j++)
                     {
-                        map[y + i, x + j] = false;
+                        map[y + i, x + j] = 1;
                     }
                 }
             }
@@ -391,7 +423,7 @@ namespace App.lib
                 {
                     for (int j = 0; j < shipLength; j++)
                     {
-                        map[y + j, x + i] = false;
+                        map[y + j, x + i] = 1;
                     }
                 }
             }
@@ -399,18 +431,146 @@ namespace App.lib
 
         private void StartGame()
         {
-            mapMasking = true;
+            //Player plays = true, CPU plays = false
+            bool turn = true;
+            //TODO: TEST
+            // mapMasking = true;
+            mapMasking = false;
             Atomic.StartGameMessage();
             
             Console.WriteLine(Atomic.MapViewAnouncement(mapView));
             PrintMap(ref CPU.mapCPU);
-
 
             //TEST
             // if(Console.ReadLine() == "1"){
             //     mapMasking = false;
             // }
             // PrintMap(ref CPU.mapCPU);
+
+            for (int i = 0; i < settings.weaponSpecifications.Count; i++){
+
+                    var weapon = settings.weaponSpecifications.ElementAt(i);
+                    Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
+            }
+
+            Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
+
+            for(int i = 1; i <= settings.weaponSpecifications.Count; i++)
+            {
+                indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
+            }
+
+            if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
+            {
+                string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
+                Console.WriteLine("Selected weapon: " + selectedWeaponName);
+
+                SetShotCoordinates(selectedWeaponName);
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid input. Please select a ship from the list.");
+                Atomic.GameSettingsError();
+            }
+        }
+
+        private void SetShotCoordinates(string weponType){
+            int x;
+            int y;
+            Console.WriteLine("Enter the target coordinates");
+
+            while (true)
+            {
+                Console.WriteLine("Enter the column coordinate (x):");
+                if (int.TryParse(Console.ReadLine(), out x))
+                {
+                    break;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid input. Please enter a valid number for the column.");
+                    Console.ResetColor();
+                }
+            }
+
+            while (true)
+            {
+                Console.WriteLine("Enter the row (y):");
+                if (int.TryParse(Console.ReadLine(), out y))
+                {
+                    break;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid input. Please enter a valid number for the row.");
+                    Console.ResetColor();
+                }
+            }
+            ValidateShotCoordinates(weponType, x, y);
+            Fire(weponType, x, y);
+        }
+
+        private void ValidateShotCoordinates(string weaponName, int x, int y)
+        {
+            int width = settings.mapWidth ?? 10;
+            int height = settings.mapHeight ?? 10;
+
+            int weaponWidth = settings.weaponSpecifications[weaponName][0];
+            int weaponHeight = settings.weaponSpecifications[weaponName][1];
+
+            if (x < 0 || x + weaponWidth >= width || y < 0 || y + weaponHeight >= height)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("You are shooting outside the map. Do you want to set new coordinates? (y/n)");
+                Console.ResetColor();
+                if (Console.ReadLine() == "y")
+                {
+                    SetShotCoordinates(weaponName);
+                }
+                else if (Console.ReadLine() == "n")
+                {
+
+                }
+            }
+        }
+
+        private void Fire(string weaponName, int x, int y)
+        {
+            if (weaponName == "Depth Charge")
+            {
+                DepthCharge(weaponName, x, y);
+            }
+            // TODO: TEST
+            mapMasking = false;
+            PrintMap(ref CPU.mapCPU);
+            mapMasking = true;
+            PrintMap(ref CPU.mapCPU);
+            mapMasking = false;
+            PrintMap(ref CPU.mapCPU);
+        }
+
+        private void DepthCharge(string weaponName, int x, int y)
+        {
+            int weaponWidth = settings.weaponSpecifications[weaponName][0];
+            int weaponHeight = settings.weaponSpecifications[weaponName][1];
+
+            for (int i = 0; i < weaponHeight; i++)
+            {
+                for (int j = 0; j < weaponWidth; j++)
+                {
+                    if (CPU.mapCPU[y + i, x + j] == 1)
+                    {
+                        CPU.mapCPU[y + i, x + j] = 2; // Hit
+                    }
+                    else if (CPU.mapCPU[y + i, x + j] == 0)
+                    {
+                        CPU.mapCPU[y + i, x + j] = 4; // Miss
+                    }
+                }
+            }
         }
     }
 }

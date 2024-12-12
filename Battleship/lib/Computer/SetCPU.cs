@@ -10,14 +10,14 @@ namespace App.lib.Computer
     {
         private GameSettings settings;
         private GameConstructor constructor;
-        public bool?[,] mapCPU;
+        public int[,] mapCPU;
 
         // Constructor to initialize the settings and constructor objects
         public SetCPU(GameSettings settings, GameConstructor constructor)
         {
             this.settings = settings;
             this.constructor = constructor;
-            mapCPU = new bool?[settings.mapHeight ?? 10, settings.mapWidth ?? 10];
+            mapCPU = new int[settings.mapHeight ?? 10, settings.mapWidth ?? 10];
         }
 
         public void GetCPUSet()
@@ -90,7 +90,7 @@ namespace App.lib.Computer
                 {
                     for (int j = 0; j < shipLength; j++)
                     {
-                        if (x + j >= width || y + i >= height || mapCPU[y + i, x + j] != null)
+                        if (x + j >= width || y + i >= height || mapCPU[y + i, x + j] != 0)
                         {
                             return false; // Overlapping ship found
                         }
@@ -107,7 +107,7 @@ namespace App.lib.Computer
                 {
                     for (int j = 0; j < shipWidth; j++)
                     {
-                        if (y + i >= height || x + j >= width || mapCPU[y + i, x + j] != null)
+                        if (y + i >= height || x + j >= width || mapCPU[y + i, x + j] != 0)
                         {
                             return false; // Overlapping ship found
                         }
@@ -125,7 +125,7 @@ namespace App.lib.Computer
                 {
                     for (int j = 0; j < shipLength; j++)
                     {
-                        mapCPU[y + i, x + j] = false;
+                        mapCPU[y + i, x + j] = 1;
                     }
                 }
             }
@@ -135,7 +135,7 @@ namespace App.lib.Computer
                 {
                     for (int j = 0; j < shipLength; j++)
                     {
-                        mapCPU[y + j, x + i] = false;
+                        mapCPU[y + j, x + i] = 1;
                     }
                 }
             }
