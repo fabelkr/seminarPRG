@@ -17,7 +17,7 @@ namespace App.lib
         public int? difficulty = null;
         public System.ConsoleColor? colorTheme = null;
 
-        string[] weaponNames = [
+        public string[] weaponNames = [
             "Torpedo",
             "Missile",
             "Depth Charge",

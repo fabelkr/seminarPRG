@@ -58,20 +58,24 @@ namespace App.lib
             Console.Write("'O'");
             Console.ResetColor();
             Console.Write("indicates a miss, and '~' indicates area, where you haven't shot yet.\n");
-            Console.WriteLine("Select the weapon you want to use and fire the first shot:");
-            Console.WriteLine("You can look at the weapon specifications any time by typing 'help' and then heading to the 'Weapons' section.");
         }
 
         public static string MapViewAnouncement(bool mapView)
         {   
             if(mapView == true){
                 Console.ForegroundColor = ConsoleColor.Green;
-                return "\nYou are currently viewing your map.\n";
+                return "\nYou are currently viewing your map.\n You can switch to the enemy's map by typing 'map'.\n";
             }
             else {
                 Console.ForegroundColor = ConsoleColor.Red;
-                return "\nYou are currently viewing the enemy's map.\n";
+                return "\nYou are currently viewing the enemy's map.\n You can switch to your map by typing 'map'.\n";
             }
+        }
+
+        public static void GameInstructions()
+        {
+            Console.WriteLine("Select the weapon you want to use and fire the first shot:");
+            Console.WriteLine("You can look at the weapon specifications any time by typing 'help' and then heading to the 'Weapons' section.");
         }
     }
 }
