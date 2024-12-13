@@ -11,7 +11,6 @@ namespace App.lib
     public class GameConstructor
     {
         private Dictionary<string, bool[,]> shipState;
-        private Dictionary<string, bool> shipOrientation;
 
         //0 = water, 1 = ship, 2 = hit, 3 = sunken ship, 4 = missed shot
         public int[,] map;
@@ -54,7 +53,12 @@ namespace App.lib
 
                 // Add the ship coordinates and its state to the dictionary
                 shipState[ship.Key] = shipCoordinates;
+
             }
+                //TODO: TEST
+                foreach (KeyValuePair <string, bool[,]> state in shipState){
+                    Console.WriteLine("name:" + state.Key + "value" + state.Value);
+                }
             //TEST
             // foreach (KeyValuePair<string, bool> state in shipState)
             // {
