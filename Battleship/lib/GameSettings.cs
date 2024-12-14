@@ -67,7 +67,6 @@ namespace App.lib
             {
                 shipSpecifications.Add(shipNames[i], new int[] { shipSizes[i, 0], shipSizes[i, 1] });
             }
-
         }
 
         //ridiculously long function for setting up the game

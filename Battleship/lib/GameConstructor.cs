@@ -1,7 +1,9 @@
 using System;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+using System.Data;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using App.lib.Computer;
 using App.lib.RenderASCII;
@@ -11,10 +13,13 @@ namespace App.lib
     public class GameConstructor
     {
         private Dictionary<string, bool[,]> shipState;
+        private Dictionary<string, List<(int, int)>> shipPositionsMap = new Dictionary<string, List<(int, int)>>();
 
         //0 = water, 1 = ship, 2 = hit, 3 = sunken ship, 4 = missed shot
         public int[,] map;
         private bool mapMasking = false;
+
+        public bool missileOrientation;
 
         int sunkenShipCounter = 0;
 
@@ -24,6 +29,7 @@ namespace App.lib
 
         private GameSettings settings;
         string currentAddedShip;
+        bool[,] shipCoordinates;
 
             
         //Dictionary for storing data if there are any coordinates set for the ship
@@ -37,10 +43,11 @@ namespace App.lib
             //initialize the shipState dictionary
             CPU = new SetCPU(settings, this);
             shipState = new Dictionary<string, bool[,]>();
+            shipPositionsMap = new Dictionary<string, List<(int, int)>>();
             //Sets the state of each in game included ship to false by default (Not hit)
             foreach (KeyValuePair<string, int[]> ship in settings.shipSpecifications)
             {
-                bool[,] shipCoordinates = new bool[ship.Value[0], ship.Value[1]];
+                shipCoordinates = new bool[ship.Value[0], ship.Value[1]];
 
                 // Initialize all coordinates of ship to false (not hit)
                 for (int i = 0; i < ship.Value[0]; i++)
@@ -55,10 +62,6 @@ namespace App.lib
                 shipState[ship.Key] = shipCoordinates;
 
             }
-                //TODO: TEST
-                foreach (KeyValuePair <string, bool[,]> state in shipState){
-                    Console.WriteLine("name:" + state.Key + "value" + state.Value);
-                }
             //TEST
             // foreach (KeyValuePair<string, bool> state in shipState)
             // {
@@ -72,6 +75,10 @@ namespace App.lib
             // Console.WriteLine(settings.mapType);
             // Console.WriteLine(settings.mapHeight);
             // Console.WriteLine(settings.mapWidth);
+                //TODO: TEST
+                foreach (KeyValuePair <string, bool[,]> state in shipState){
+                    Console.WriteLine("name:" + state.Key + "value" + state.Value);
+                }
 
             Console.Clear();
             CreateMap();
@@ -404,11 +411,14 @@ namespace App.lib
             return true;
         }
 
-        private void PlaceShipOnMap(string shipName, int x, int y, bool orientation)
+        public void PlaceShipOnMap(string shipName, int x, int y, bool orientation)
         {
             int shipLength = settings.shipSpecifications[shipName][1];
             int shipWidth = settings.shipSpecifications[shipName][0];
 
+            // Initialize ship coordinates
+            bool[,] shipCoordinates = new bool[shipWidth, shipLength];
+            List<(int, int)> shipPositions = new List<(int, int)>();
             //true = horizontal
             if (orientation)
             {
@@ -417,6 +427,8 @@ namespace App.lib
                     for (int j = 0; j < shipLength; j++)
                     {
                         map[y + i, x + j] = 1;
+                        shipCoordinates[i, j] = false;
+                        shipPositions.Add((y + i, x + j)); // Store the position as a unique integer
                     }
                 }
             }
@@ -428,89 +440,175 @@ namespace App.lib
                     for (int j = 0; j < shipLength; j++)
                     {
                         map[y + j, x + i] = 1;
+                        shipCoordinates[i, j] = false;
+                        shipPositions.Add((y + j, x + i)); // Store the position as a unique integer
                     }
                 }
             }
+
+            // Add the ship coordinates and its state to the dictionary
+            shipState[shipName] = shipCoordinates;
+
+            // Store the ship positions in the dictionary
+            shipPositionsMap[shipName] = shipPositions;
         }
 
         private void StartGame()
         {
             //Player plays = true, CPU plays = false
             bool turn = true;
-            //TODO: TEST
-            // mapMasking = true;
-            mapMasking = false;
-            Atomic.StartGameMessage();
-            
-            Console.WriteLine(Atomic.MapViewAnouncement(mapView));
-            PrintMap(ref CPU.mapCPU);
-
-            //TEST
-            // if(Console.ReadLine() == "1"){
-            //     mapMasking = false;
-            // }
-            // PrintMap(ref CPU.mapCPU);
-
-            for (int i = 0; i < settings.weaponSpecifications.Count; i++){
-
-                    var weapon = settings.weaponSpecifications.ElementAt(i);
-                    Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
-            }
-
-            Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
-
-            for(int i = 1; i <= settings.weaponSpecifications.Count; i++)
+            // while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
             {
-                indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
-            }
+                if (turn == true){
+                    //TODO: TEST
+                    // mapMasking = true;
+                    mapMasking = false;
+                    Atomic.StartGameMessage();
+                    
+                    Console.WriteLine(Atomic.MapViewAnouncement(mapView));
+                    PrintMap(ref CPU.mapCPU);
 
-            if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
-            {
-                string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
-                Console.WriteLine("Selected weapon: " + selectedWeaponName);
+                    //TEST
+                    // if(Console.ReadLine() == "1"){
+                    //     mapMasking = false;
+                    // }
+                    // PrintMap(ref CPU.mapCPU);
 
-                SetShotCoordinates(selectedWeaponName);
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Invalid input. Please select a ship from the list.");
-                Atomic.GameSettingsError();
+                    for (int i = 0; i < settings.weaponSpecifications.Count; i++){
+
+                            var weapon = settings.weaponSpecifications.ElementAt(i);
+                            Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
+                    }
+
+                    Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
+
+                    for(int i = 1; i <= settings.weaponSpecifications.Count; i++)
+                    {
+                        indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
+                    }
+
+                    if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
+                    {
+                        string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
+                        Console.WriteLine("Selected weapon: " + selectedWeaponName);
+
+                        SetShotCoordinates(selectedWeaponName);
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid input. Please select a ship from the list.");
+                        Atomic.GameSettingsError();
+                    }
+                }
+                else{
+                    
+                }
             }
         }
 
         private void SetShotCoordinates(string weponType){
-            int x;
-            int y;
-            Console.WriteLine("Enter the target coordinates");
+            int x = 0;
+            int y = 0;
 
-            while (true)
-            {
-                Console.WriteLine("Enter the column coordinate (x):");
-                if (int.TryParse(Console.ReadLine(), out x))
+            if(weponType == "Missile"){
+                Console.WriteLine("You can send the missile from the sides of the map only.");
+                Console.WriteLine("Enter the side of the map you want to send the missile from:\n1. Top\n2. Left");
+                switch (Console.ReadLine())
                 {
-                    break;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Invalid input. Please enter a valid number for the column.");
-                    Console.ResetColor();
+                    case "1":
+                        y = 0;
+                        Console.WriteLine("Enter the column coordinate (x):");
+                        if (int.TryParse(Console.ReadLine(), out x) && x >= 0 && x < settings.mapWidth)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Invalid input. Please enter a valid number for the column.");
+                            Console.ResetColor();
+                            SetShotCoordinates("Missile");
+                        }
+                        if(x != 0){
+                            missileOrientation = false;
+                        }
+                        else{
+                            Console.WriteLine("Do you wnat to shoot horizontally or vertically?");
+                            Console.WriteLine("1. Horizontal\n2. Vertical");
+                            if(Console.ReadLine() == "1"){
+                                missileOrientation = false;
+                            }
+                            else{
+                                missileOrientation = true;
+                            }
+                        }
+                        break;
+                    case "2":
+                        x = 0;
+                        Console.WriteLine("Enter the row (y):");
+                        if (int.TryParse(Console.ReadLine(), out y) && y >= 0 && y < settings.mapHeight)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Invalid input. Please enter a valid number for the row.");
+                            Console.ResetColor();
+                            SetShotCoordinates("Missile");
+                        }
+                        if(y != 0){
+                            missileOrientation = true;
+                        }
+                        else{
+                            Console.WriteLine("Do you wnat to shoot horizontally or vertically?");
+                            Console.WriteLine("1. Horizontal\n2. Vertical");
+                            if(Console.ReadLine() == "1"){
+                                missileOrientation = false;
+                            }
+                            else{
+                                missileOrientation = true;
+                            }
+                        }
+                        break;
+                    default:
+                        Console.WriteLine("Invalid input. Defaulting to top orientation.");
+                        missileOrientation = true;
+                        break;
                 }
             }
+            else{
+                Console.WriteLine("Enter the target coordinates");
 
-            while (true)
-            {
-                Console.WriteLine("Enter the row (y):");
-                if (int.TryParse(Console.ReadLine(), out y))
+                while (true)
                 {
-                    break;
+                    Console.WriteLine("Enter the column coordinate (x):");
+                    if (int.TryParse(Console.ReadLine(), out x))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid input. Please enter a valid number for the column.");
+                        Console.ResetColor();
+                    }
                 }
-                else
+
+                while (true)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Invalid input. Please enter a valid number for the row.");
-                    Console.ResetColor();
+                    Console.WriteLine("Enter the row (y):");
+                    if (int.TryParse(Console.ReadLine(), out y))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid input. Please enter a valid number for the row.");
+                        Console.ResetColor();
+                    }
                 }
             }
             ValidateShotCoordinates(weponType, x, y);
@@ -525,7 +623,7 @@ namespace App.lib
             int weaponWidth = settings.weaponSpecifications[weaponName][0];
             int weaponHeight = settings.weaponSpecifications[weaponName][1];
 
-            if (x < 0 || x + weaponWidth >= width || y < 0 || y + weaponHeight >= height)
+            if (x < 0 || x + weaponWidth > width || y < 0 || y + weaponHeight > height)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("You are shooting outside the map. Do you want to set new coordinates? (y/n)");
@@ -547,6 +645,18 @@ namespace App.lib
             {
                 DepthCharge(weaponName, x, y);
             }
+            else if (weaponName == "Torpedo")
+            {
+                Torpedo(x, y);
+            }
+            else if (weaponName == "Missile")
+            {
+                Missile(x, y, missileOrientation);
+            }
+            else if (weaponName == "Nuke")
+            {
+                DepthCharge(weaponName, x, y);
+            }
             // TODO: TEST
             mapMasking = false;
             PrintMap(ref CPU.mapCPU);
@@ -554,6 +664,70 @@ namespace App.lib
             PrintMap(ref CPU.mapCPU);
             mapMasking = false;
             PrintMap(ref CPU.mapCPU);
+        }
+
+        private void UpdateShipState(int y, int x)
+        {
+            Console.WriteLine($"Updating ship state for hit at ({x}, {y})");
+
+            foreach (var ship in CPU.shipPositionsMapCPU)
+            {
+                string shipName = ship.Key;
+                List<(int, int)> shipPositions = ship.Value;
+
+                // Check if the hit coordinates match any of the ship's positions
+                if (shipPositions.Contains((y, x)))
+                {
+                    Console.WriteLine($"Marking position ({x}, {y}) of ship {shipName} as hit");
+
+                    // Directly update the ship's state in the shipStateCPU dictionary
+                    for (int i = 0; i < shipPositions.Count; i++)
+                    {
+                        if (shipPositions[i] == (y, x))
+                        {
+                            // Find the exact position in the shipCoordinates array
+                            for (int j = 0; j < CPU.shipStateCPU[shipName].GetLength(0); j++)
+                            {
+                                for (int k = 0; k < CPU.shipStateCPU[shipName].GetLength(1); k++)
+                                {
+                                    if (shipPositions[j * CPU.shipStateCPU[shipName].GetLength(1) + k] == (y, x))
+                                    {
+                                        CPU.shipStateCPU[shipName][j, k] = true; // Mark the position as hit
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (IsShipSunk(shipName))
+                    {
+                        Console.WriteLine($"Ship {shipName} is sunk!");
+                        sunkenShipCounter++;
+                    }
+
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine($"No hit at ({x}, {y}) for ship {shipName}");
+                }
+            }
+        }
+
+        private bool IsShipSunk(string shipName)
+        {
+            bool[,] shipCoordinates = CPU.shipStateCPU[shipName];
+            for (int i = 0; i < shipCoordinates.GetLength(0); i++)
+            {
+                for (int j = 0; j < shipCoordinates.GetLength(1); j++)
+                {
+                    if (!shipCoordinates[i, j])
+                    {
+                        return false; // Ship is not completely sunk
+                    }
+                }
+            }
+            return true; // Ship is completely sunk
         }
 
         private void DepthCharge(string weaponName, int x, int y)
@@ -568,6 +742,8 @@ namespace App.lib
                     if (CPU.mapCPU[y + i, x + j] == 1)
                     {
                         CPU.mapCPU[y + i, x + j] = 2; // Hit
+                        UpdateShipState(y + i, x + j);
+                        PrintShipState(); // Print ship state for debugging
                     }
                     else if (CPU.mapCPU[y + i, x + j] == 0)
                     {
@@ -575,6 +751,58 @@ namespace App.lib
                     }
                 }
             }
+        }
+
+        private void PrintShipState()
+        {
+            foreach (KeyValuePair<string, bool[,]> state in CPU.shipStateCPU)
+            {
+                Console.WriteLine("Ship name: " + state.Key);
+
+                for (int i = 0; i < state.Value.GetLength(0); i++)
+                {
+                    for (int j = 0; j < state.Value.GetLength(1); j++)
+                    {
+                        Console.Write(state.Value[i, j] ? "1 " : "0 ");
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine();
+            }
+
+            PrintShipCoordinates();
+        }
+
+        private void PrintShipCoordinates()
+        {
+            foreach (KeyValuePair<string, List<(int, int)>> ship in CPU.shipPositionsMapCPU)
+            {
+                Console.WriteLine("Ship name: " + ship.Key);
+                List<(int, int)> shipPositions = ship.Value;
+
+                foreach (var pos in shipPositions)
+                {
+                    Console.WriteLine($"({pos.Item1}, {pos.Item2})");
+                }
+                Console.WriteLine();
+            }
+        }
+
+        private void Torpedo(int x, int y){
+            if (CPU.mapCPU[y, x] == 1)
+            {
+                CPU.mapCPU[y, x] = 2; // Hit
+                UpdateShipState(y, x);
+                PrintShipState(); // Print ship state for debugging
+            }
+            else if (CPU.mapCPU[y, x] == 0)
+            {
+                CPU.mapCPU[y, x] = 4; // Miss
+            }
+        }
+
+        private void Missile(int x, int y, bool orientation){
+            //TODO:
         }
     }
 }

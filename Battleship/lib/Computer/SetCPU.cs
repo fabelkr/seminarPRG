@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using App.lib.RenderASCII;
 
 namespace App.lib.Computer
@@ -10,6 +11,9 @@ namespace App.lib.Computer
     {
         private GameSettings settings;
         private GameConstructor constructor;
+
+        public Dictionary<string, List<(int, int)>> shipPositionsMapCPU = new Dictionary<string, List<(int, int)>>();
+        public Dictionary<string, bool[,]> shipStateCPU = new Dictionary<string, bool[,]>();
         public int[,] mapCPU;
 
         // Constructor to initialize the settings and constructor objects
@@ -18,6 +22,10 @@ namespace App.lib.Computer
             this.settings = settings;
             this.constructor = constructor;
             mapCPU = new int[settings.mapHeight ?? 10, settings.mapWidth ?? 10];
+            foreach (KeyValuePair<string, int[]> ship in settings.shipSpecifications)
+            {
+                shipStateCPU[ship.Key] = new bool[ship.Value[0], ship.Value[1]];
+            }
         }
 
         public void GetCPUSet()
@@ -48,6 +56,7 @@ namespace App.lib.Computer
                 int shipLength = ship.Value[1];
                 int x, y;
                 bool orientation;
+                string shipName = ship.Key;
 
                 bool validCoordinates = false;
 
@@ -62,7 +71,7 @@ namespace App.lib.Computer
                         validCoordinates = true;
 
                         // Place the ship on the map
-                        PlaceCPUShipOnMap(x, y, orientation, shipWidth, shipLength);
+                        PlaceCPUShipOnMap(shipName, x, y, orientation, shipWidth, shipLength);
                     }
                 }
             }
@@ -117,8 +126,11 @@ namespace App.lib.Computer
             return true; // All checks passed, coordinates are valid
         }
 
-        private void PlaceCPUShipOnMap(int x, int y, bool orientation, int shipWidth, int shipLength)
+        private void PlaceCPUShipOnMap(string shipName, int x, int y, bool orientation, int shipWidth, int shipLength)
         {
+            bool[,] shipCoordinatesCPU = new bool[shipWidth, shipLength];
+            List<(int, int)> shipPositionsCPU = new List<(int, int)>();
+
             if (orientation) // Horizontal
             {
                 for (int i = 0; i < shipWidth; i++)
@@ -126,6 +138,8 @@ namespace App.lib.Computer
                     for (int j = 0; j < shipLength; j++)
                     {
                         mapCPU[y + i, x + j] = 1;
+                        shipCoordinatesCPU[i, j] = false;
+                        shipPositionsCPU.Add((y + i, x + j)); // Store the position as a tuple
                     }
                 }
             }
@@ -136,9 +150,14 @@ namespace App.lib.Computer
                     for (int j = 0; j < shipLength; j++)
                     {
                         mapCPU[y + j, x + i] = 1;
+                        shipCoordinatesCPU[i, j] = false;
+                        shipPositionsCPU.Add((y + j, x + i)); // Store the position as a tuple
                     }
                 }
             }
+
+            // Store the ship positions in the dictionary
+            shipPositionsMapCPU[shipName] = shipPositionsCPU;
         }
     }
 }
