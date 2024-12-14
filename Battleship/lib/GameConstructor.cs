@@ -15,13 +15,19 @@ namespace App.lib
         private Dictionary<string, bool[,]> shipState;
         private Dictionary<string, List<(int, int)>> shipPositionsMap = new Dictionary<string, List<(int, int)>>();
 
+        //Player plays = true, CPU plays = false
+        bool turn = true;
+
         //0 = water, 1 = ship, 2 = hit, 3 = sunken ship, 4 = missed shot
         public int[,] map;
         private bool mapMasking = false;
+        bool empCPU = false;
+        bool empPlayer = false;
 
-        public bool missileOrientation;
-
+        private bool missileOrientation;
+        private bool carpetOrientation;
         int sunkenShipCounter = 0;
+        int sunkenShipCounterCPU = 0;
 
         public int selectedWeapon;
 
@@ -455,50 +461,67 @@ namespace App.lib
 
         private void StartGame()
         {
-            //Player plays = true, CPU plays = false
-            bool turn = true;
-            // while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
+            int empDurationPlayer = 3;
+            //TODO: TEST
+            // mapMasking = true;
+            mapMasking = false;
+            Atomic.StartGameMessage();
+
+            while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
             {
                 if (turn == true){
-                    //TODO: TEST
-                    // mapMasking = true;
-                    mapMasking = false;
-                    Atomic.StartGameMessage();
-                    
+                    //TODO: map change from weapon select
                     Console.WriteLine(Atomic.MapViewAnouncement(mapView));
-                    PrintMap(ref CPU.mapCPU);
-
-                    //TEST
-                    // if(Console.ReadLine() == "1"){
-                    //     mapMasking = false;
-                    // }
-                    // PrintMap(ref CPU.mapCPU);
-
-                    for (int i = 0; i < settings.weaponSpecifications.Count; i++){
-
-                            var weapon = settings.weaponSpecifications.ElementAt(i);
-                            Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
+                    if(mapView){
+                        PrintMap(ref map);
+                    }
+                    else{
+                        PrintMap(ref CPU.mapCPU);
+                    }
+                    if(Console.ReadLine() == "map"){
+                        mapView = !mapView;
+                        mapMasking = false;
+                        StartGame();
                     }
 
-                    Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
-
-                    for(int i = 1; i <= settings.weaponSpecifications.Count; i++)
-                    {
-                        indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
+                    if(empPlayer == true){
+                        Console.WriteLine("You have been hit by EMP strike. You can use only torpedo, this efect will last for: " + empDurationPlayer + " turns.");
+                        Console.WriteLine("Press any key to shoot with torpedo");
+                        Console.ReadKey();
+                        SetShotCoordinates("Torpedo");
+                        empDurationPlayer--;
+                        if(empDurationPlayer == 0){
+                            empPlayer = false;
+                            empDurationPlayer = 3;
+                        }
                     }
+                    else{
+                        for (int i = 0; i < settings.weaponSpecifications.Count; i++){
 
-                    if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
-                    {
-                        string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
-                        Console.WriteLine("Selected weapon: " + selectedWeaponName);
+                                var weapon = settings.weaponSpecifications.ElementAt(i);
+                                Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
+                        }
 
-                        SetShotCoordinates(selectedWeaponName);
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Invalid input. Please select a ship from the list.");
-                        Atomic.GameSettingsError();
+                        Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
+
+                        for(int i = 1; i <= settings.weaponSpecifications.Count; i++)
+                        {
+                            indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
+                        }
+
+                        if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
+                        {
+                            string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
+                            Console.WriteLine("Selected weapon: " + selectedWeaponName);
+
+                            SetShotCoordinates(selectedWeaponName);
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Invalid input. Please select a ship from the list.");
+                            Atomic.GameSettingsError();
+                        }
                     }
                 }
                 else{
@@ -507,11 +530,52 @@ namespace App.lib
             }
         }
 
-        private void SetShotCoordinates(string weponType){
+        private void SetShotCoordinates(string weaponType){
             int x = 0;
             int y = 0;
+            if(weaponType == "Carpet Bomber"){
+                Console.WriteLine("Set the orientation of the carpet bomber:\n1. horizontal\n2. vertical");
+                switch (Console.ReadLine())
+                {
+                    case "1":
+                        carpetOrientation = false;
+                        break;
+                    case "2":
+                        carpetOrientation = true;
+                        break;
+                    default:
+                        Console.WriteLine("Invalid input. Defaulting to horizontal orientation.");
+                        carpetOrientation = false;
+                        break;
+                }
 
-            if(weponType == "Missile"){
+                Console.WriteLine("Enter the column coordinate (x):");
+                if (int.TryParse(Console.ReadLine(), out x) && x >= 0 && x < settings.mapWidth)
+                {
+
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid input. Please enter a valid number for the column.");
+                    Console.ResetColor();
+                    SetShotCoordinates("Carpet Bomber");
+                }
+
+                Console.WriteLine("Enter the row coordinate (y):");
+                if (int.TryParse(Console.ReadLine(), out y) && y >= 0 && y < settings.mapHeight)
+                {
+
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid input. Please enter a valid number for the row.");
+                    Console.ResetColor();
+                    SetShotCoordinates("Carpet Bomber");
+                }
+            }
+            else if(weaponType == "Missile"){
                 Console.WriteLine("You can send the missile from the sides of the map only.");
                 Console.WriteLine("Enter the side of the map you want to send the missile from:\n1. Top\n2. Left");
                 switch (Console.ReadLine())
@@ -611,8 +675,8 @@ namespace App.lib
                     }
                 }
             }
-            ValidateShotCoordinates(weponType, x, y);
-            Fire(weponType, x, y);
+            ValidateShotCoordinates(weaponType, x, y);
+            Fire(weaponType, x, y);
         }
 
         private void ValidateShotCoordinates(string weaponName, int x, int y)
@@ -657,6 +721,30 @@ namespace App.lib
             {
                 DepthCharge(weaponName, x, y);
             }
+            else if (weaponName == "EMP")
+            {
+                if(turn)
+                {
+                    empCPU = true;
+                }
+                else
+                {
+                    empPlayer = true;
+                }
+            } 
+            else if (weaponName == "Scanner")
+            {
+                Scanner(x, y);
+            }
+            else if (weaponName == "Carpet Bomber")
+            {
+                CarpetBomber(x, y, carpetOrientation);
+            }
+            else
+            {
+                Console.WriteLine("Invalid weapon name.");
+            }
+
             // TODO: TEST
             mapMasking = false;
             PrintMap(ref CPU.mapCPU);
@@ -701,8 +789,16 @@ namespace App.lib
 
                     if (IsShipSunk(shipName))
                     {
+                        if (turn)
+                        {
+                            Console.WriteLine($"Ship {shipName} is sunk!");
+                            sunkenShipCounter++;
+                        }
+                        else
+                        {
                         Console.WriteLine($"Ship {shipName} is sunk!");
-                        sunkenShipCounter++;
+                        sunkenShipCounterCPU++;
+                        }
                     }
 
                     return;
@@ -802,7 +898,160 @@ namespace App.lib
         }
 
         private void Missile(int x, int y, bool orientation){
-            //TODO:
+            // If starting point is in the 0x 0y corner
+            if (x == 0 && y == 0)
+            {
+                if (orientation)
+                {
+                    // Vertical orientation
+                    for (int i = 0; i < settings.mapHeight; i++)
+                    {
+                        if (CPU.mapCPU[i, x] == 1)
+                        {
+                            CPU.mapCPU[i, x] = 2; // Hit
+                            UpdateShipState(i, x);
+                            break;
+                        }
+                        else
+                        {
+                            CPU.mapCPU[i, x] = 4; // Miss
+                        }
+                    }
+                }
+                else
+                {
+                    // Horizontal orientation
+                    for (int j = 0; j < settings.mapWidth; j++)
+                    {
+                        if (CPU.mapCPU[y, j] == 1)
+                        {
+                            CPU.mapCPU[y, j] = 2; // Hit
+                            UpdateShipState(y, j);
+                            break;
+                        }
+                        else
+                        {
+                            CPU.mapCPU[y, j] = 4; // Miss
+                        }
+                    }
+                }
+            }
+            // Starting from the left edge, horizontal orientation
+            else if (x == 0)
+            {
+                for (int j = 0; j < settings.mapWidth; j++)
+                {
+                    if (CPU.mapCPU[y, j] == 1)
+                    {
+                        CPU.mapCPU[y, j] = 2; // Hit
+                        UpdateShipState(y, j);
+                        break;
+                    }
+                    else
+                    {
+                        CPU.mapCPU[y, j] = 4; // Miss
+                    }
+                }
+            }
+            else if (y == 0)
+            {
+                // Starting from the top edge, vertical orientation
+                for (int i = 0; i < settings.mapHeight; i++)
+                {
+                    if (CPU.mapCPU[i, x] == 1)
+                    {
+                        CPU.mapCPU[i, x] = 2; // Hit
+                        UpdateShipState(i, x);
+                        break;
+                    }
+                    else
+                    {
+                        CPU.mapCPU[i, x] = 4; // Miss
+                    }
+                }
+            }
+        }
+
+        private void Scanner(int x, int y)
+        {
+            mapMasking = false;
+
+            // this prints the 3x3 scanned area 
+            for (int i = y - 1; i <= y + 1; i++)
+            {
+                for (int j = x - 1; j <= x + 1; j++)
+                {
+                    //this prints line 3X3 of scanned area
+                    if (i >= 0 && i < CPU.mapCPU.GetLength(0) && j >= 0 && j < CPU.mapCPU.GetLength(1))
+                    {
+                        if(CPU.mapCPU[i, j] == 1)
+                        {
+                            Console.ForegroundColor = settings.colorTheme ?? ConsoleColor.White;
+                        }
+                        else if(CPU.mapCPU[i, j] == 2)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                        }
+                        else if(CPU.mapCPU[i, j] == 4)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                        }
+                        Console.Write(CPU.mapCPU[i, j] == 1 ? "S " : CPU.mapCPU[i, j] == 2 ? "X " : CPU.mapCPU[i, j] == 4 ? "O " : "~ ");
+                    }
+                    else
+                    {
+                        Console.Write("  ");
+                    }
+                }
+                Console.WriteLine();
+            }
+
+            mapMasking = true;
+        }
+
+        private void CarpetBomber(int x, int y, bool orientation)
+        {
+            if (orientation)
+            {
+                // Vertical
+                for (int i = 0; i < 2; i++)
+                {
+                    if (y + i < settings.mapHeight)
+                    {
+                        if (CPU.mapCPU[y + i, x] == 1)
+                        {
+                            CPU.mapCPU[y + i, x] = 2;
+                            UpdateShipState(y + i, x);
+                        }
+                        else
+                        {
+                            CPU.mapCPU[y + i, x] = 4;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int j = 0; j < 2; j++)
+                {
+                    if (x + j < settings.mapWidth)
+                    {
+                        if (CPU.mapCPU[y, x + j] == 1)
+                        {
+                            CPU.mapCPU[y, x + j] = 2;
+                            UpdateShipState(y, x + j);
+                        }
+                        else
+                        {
+                            CPU.mapCPU[y, x + j] = 4;
+                        }
+                    }
+                }
+            }
         }
     }
 }
