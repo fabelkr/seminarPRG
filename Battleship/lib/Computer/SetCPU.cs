@@ -167,6 +167,7 @@ namespace App.lib.Computer
 
         public void SelectWeaponCPU()
         {
+            Console.WriteLine("trun . " + constructor.turnIndex);
             //TODO: Fix the wepon charge limits
             bool valid = false;
             Random WeaponIndex = new Random();
@@ -183,10 +184,12 @@ namespace App.lib.Computer
                     //missile
                     if(startingWeapon == 1){
                         chosenWeaponCPU = settings.weaponNames[1];
+                        settings.remainingWeaponUsageCPU[1] = false;
                     }
                     //Depth charge
                     else{
                         chosenWeaponCPU = settings.weaponNames[2];
+                        settings.remainingWeaponUsageCPU[2] = false;
                     }
                 }
                 else{
@@ -196,13 +199,12 @@ namespace App.lib.Computer
                         if(chosenWeaponCPU == "EMP" && constructor.empPlayer){
                             valid = false;
                         }
-                        else if (settings.remainingWeaponUsageCPU[usedWeaponIndex] && settings.weaponSpecifications.ContainsKey(chosenWeaponCPU))
+                        else if (settings.remainingWeaponUsageCPU[usedWeaponIndex] == true && settings.weaponSpecifications.ContainsKey(chosenWeaponCPU))
                         {
                             valid = true;
                         }
-                        else if (settings.remainingWeaponUsage[usedWeaponIndex] && settings.weaponSpecifications.ContainsKey(chosenWeaponCPU))
-                        {
-                            valid = true;
+                        else{
+                            valid = false;
                         }
                     }
                 }
@@ -231,6 +233,7 @@ namespace App.lib.Computer
             if (weaponType == "Depth Charge")
             {
                 constructor.DepthCharge(ref constructor.map, weaponType, xC, yC);
+
             }
             else if (weaponType == "Torpedo")
             {
