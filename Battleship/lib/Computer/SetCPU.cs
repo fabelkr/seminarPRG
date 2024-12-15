@@ -18,6 +18,10 @@ namespace App.lib.Computer
 
         private string chosenWeaponCPU;
 
+        int xC;
+        int yC;
+        bool missileOrientationCPU = false;
+
         // Constructor to initialize the settings and constructor objects
         public SetCPU(GameSettings settings, GameConstructor constructor)
         {
@@ -59,7 +63,6 @@ namespace App.lib.Computer
                 int x, y;
                 bool orientation;
                 string shipName = ship.Key;
-
                 bool validCoordinates = false;
 
                 while (!validCoordinates)
@@ -164,8 +167,11 @@ namespace App.lib.Computer
 
         public void SelectWeaponCPU()
         {
+            //TODO: Validate if the weapon is in the weaponSpecifications
+            //TODO: Fix the wepon charge limits
             bool valid = false;
-            Random startingWeaponIndex = new Random();
+            Random WeaponIndex = new Random();
+            
             //rational
             if(constructor.empCPU){
                 chosenWeaponCPU = settings.weaponNames[0];
@@ -173,9 +179,9 @@ namespace App.lib.Computer
             else if(settings.difficulty == 1){
                 //set strategic starting weapon for CPU
                 if(constructor.turnIndex < 3){
-                    startingWeaponIndex.Next(1, 3);
+                    int startingWeapon = WeaponIndex.Next(1, 3);
                     //missile
-                    if(Convert.ToInt32(startingWeaponIndex) == 1){
+                    if(startingWeapon == 1){
                         chosenWeaponCPU = settings.weaponNames[1];
                     }
                     //Depth charge
@@ -184,21 +190,86 @@ namespace App.lib.Computer
                     }
                 }
                 else{
+                    int usedWeaponIndex = WeaponIndex.Next(1, settings.weaponSpecifications.Count + 1);
                     while(!valid){
-                        startingWeaponIndex.Next(1, settings.weaponSpecifications.Count + 1);
-                        if (settings.remainingWeaponUsage[Convert.ToInt32(startingWeaponIndex)])
+                        if (settings.remainingWeaponUsage[usedWeaponIndex])
                         {
                             valid = true;
                         }
                     }
-                    chosenWeaponCPU = settings.weaponNames[Convert.ToInt32(startingWeaponIndex)];
+                    chosenWeaponCPU = settings.weaponNames[usedWeaponIndex];
                 }
             }
             SetShotCoordinatesCPU(chosenWeaponCPU);
         }
 
         public void SetShotCoordinatesCPU(string weaponType){
+            bool valid = false;
+            Random setShotCoordinatesCPU = new Random();
 
+            while(!valid){
+                xC = setShotCoordinatesCPU.Next(0, settings.mapWidth ?? 10);
+                yC = setShotCoordinatesCPU.Next(0, settings.mapHeight ?? 10);
+
+                if(constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3){
+                }
+                else if(settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth || settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight){
+                }
+                else{
+                    valid = true;
+                }
+            }
+
+            if (weaponType == "Depth Charge")
+            {
+                constructor.DepthCharge(ref constructor.map, weaponType, xC, yC);
+            }
+            else if (weaponType == "Torpedo")
+            {
+                constructor.Torpedo(ref constructor.map, xC, yC);
+            }
+            else if (weaponType == "Missile")
+            {
+                if (xC > yC){
+                    yC = 0;
+                    missileOrientationCPU = true;
+                }
+                else if(yC > xC){
+                    xC = 0;
+                    missileOrientationCPU = false;
+                }
+                else if(xC == yC){
+                    xC = 0;
+                    yC = 0;
+                    
+                    int orientation = setShotCoordinatesCPU.Next(0, 2);
+                    if(orientation == 0){
+                        missileOrientationCPU = true;
+                    }
+                }
+                constructor.Missile(ref constructor.map, xC, yC, missileOrientationCPU);
+            }
+            else if (weaponType == "Nuke")
+            {
+                constructor.DepthCharge(ref constructor.map, weaponType, xC, yC);
+            }
+            else if (weaponType == "EMP")
+            {
+                constructor.EMP();
+            } 
+            else if (weaponType == "Scanner")
+            {
+                constructor.Scanner(ref constructor.map, xC, yC);
+            }
+            else if (weaponType == "Carpet Bomber")
+            {
+                int orientation = setShotCoordinatesCPU.Next(0, 2);
+                bool carpetOrientationCPU = false;
+                if(orientation == 0){
+                    carpetOrientationCPU = true;
+                }
+                constructor.CarpetBomber(ref constructor.map, xC, yC, carpetOrientationCPU);
+            }
         }
     }
 }

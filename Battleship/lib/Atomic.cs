@@ -54,6 +54,10 @@ namespace App.lib
             Console.Write("'X'");
             Console.ResetColor();
             Console.Write("indicates a hit,");
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.Write("'#'");
+            Console.ResetColor();
+            Console.Write("stands for a sunken ship,");
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("'O'");
             Console.ResetColor();

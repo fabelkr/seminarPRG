@@ -18,7 +18,7 @@ namespace App.lib
         private Dictionary<string, List<(int, int)>> shipPositionsMap = new Dictionary<string, List<(int, int)>>();
 
         //Player plays = true, CPU plays = false
-        bool turn = true;
+        public bool turn = true;
 
         //0 = water, 1 = ship, 2 = hit, 3 = sunken ship, 4 = missed shot
         public int[,] map;
@@ -262,6 +262,11 @@ namespace App.lib
                             Console.Write("X ");
                             Console.ResetColor();
                         }
+                        else if(map[i, j] == 3){
+                            Console.ForegroundColor = ConsoleColor.DarkRed;
+                            Console.Write("# ");
+                            Console.ResetColor();
+                        }
                     }else{
                         // Check if the point is within the circle (for circular maps)
                         if (settings.mapType == false && Math.Pow(i - height / 2, 2) + Math.Pow(j - width / 2, 2) > Math.Pow(width / 2, 2))
@@ -292,6 +297,11 @@ namespace App.lib
                             {
                                 Console.ForegroundColor = ConsoleColor.Green;
                                 Console.Write("O ");
+                            }
+                            else if (map[i, j] == 3)
+                            {
+                                Console.ForegroundColor = ConsoleColor.DarkRed;
+                                Console.Write("# ");
                             }
                             counter++;
                         }
@@ -471,38 +481,38 @@ namespace App.lib
             mapMasking = false;
             Atomic.StartGameMessage();
 
-            while (true)
-            {
-                Console.WriteLine(Atomic.MapViewAnouncement(mapView));
-                if (mapView)
-                {
-                    PrintMap(ref map);
-                }
-                else
-                {
-                    PrintMap(ref CPU.mapCPU);
-                }
-
-                Console.WriteLine("Type 'map' to switch views or press Enter to continue.");
-                string input = Console.ReadLine();
-
-                if (input == "map")
-                {
-                    mapView = !mapView;
-                    mapMasking = false;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
             while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
             {
                 if (turn){
+
+                    while (true)
+                    {
+                        Console.WriteLine(Atomic.MapViewAnouncement(mapView));
+                        if (mapView)
+                        {
+                            PrintMap(ref map);
+                        }
+                        else
+                        {
+                            PrintMap(ref CPU.mapCPU);
+                        }
+
+                        Console.WriteLine("Type 'map' to switch views or press Enter to continue.");
+                        string input = Console.ReadLine();
+
+                        if (input == "map")
+                        {
+                            mapView = !mapView;
+                            mapMasking = false;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
                     
                     if(settings.rechargeTime.Any(x => x > 0)){
-                        
+
                         for(int i = 0; i < settings.rechargeTime.Length; i++){
 
                             if(settings.rechargeTime[i] > 0){
@@ -578,6 +588,7 @@ namespace App.lib
                     CPU.SelectWeaponCPU();
                     turn = true;
                     turnIndex++;
+                    Console.WriteLine("Tady jeste je");
                 }
             }
         }
@@ -765,38 +776,31 @@ namespace App.lib
         {
             if (weaponName == "Depth Charge")
             {
-                DepthCharge(weaponName, x, y);
+                DepthCharge(ref CPU.mapCPU, weaponName, x, y);
             }
             else if (weaponName == "Torpedo")
             {
-                Torpedo(x, y);
+                Torpedo(ref CPU.mapCPU, x, y);
             }
             else if (weaponName == "Missile")
             {
-                Missile(x, y, missileOrientation);
+                Missile(ref CPU.mapCPU, x, y, missileOrientation);
             }
             else if (weaponName == "Nuke")
             {
-                DepthCharge(weaponName, x, y);
+                DepthCharge(ref CPU.mapCPU, weaponName, x, y);
             }
             else if (weaponName == "EMP")
             {
-                if(turn)
-                {
-                    empCPU = true;
-                }
-                else
-                {
-                    empPlayer = true;
-                }
+                EMP();
             } 
             else if (weaponName == "Scanner")
             {
-                Scanner(x, y);
+                Scanner(ref CPU.mapCPU, x, y);
             }
             else if (weaponName == "Carpet Bomber")
             {
-                CarpetBomber(x, y, carpetOrientation);
+                CarpetBomber(ref CPU.mapCPU, x, y, carpetOrientation);
             }
             else
             {
@@ -885,10 +889,16 @@ namespace App.lib
                     }
                 }
             }
+            foreach (var position in CPU.shipPositionsMapCPU[shipName])
+            {
+                int y = position.Item1;
+                int x = position.Item2;
+                CPU.mapCPU[y, x] = 3; // Assign the value 3 to the map coordinates
+            }
             return true; // Ship is completely sunk
         }
 
-        private void DepthCharge(string weaponName, int x, int y)
+        public void DepthCharge(ref int[,] map, string weaponName, int x, int y)
         {
             int weaponWidth = settings.weaponSpecifications[weaponName][0];
             int weaponHeight = settings.weaponSpecifications[weaponName][1];
@@ -897,15 +907,15 @@ namespace App.lib
             {
                 for (int j = 0; j < weaponWidth; j++)
                 {
-                    if (CPU.mapCPU[y + i, x + j] == 1)
+                    if (map[y + i, x + j] == 1)
                     {
-                        CPU.mapCPU[y + i, x + j] = 2; // Hit
+                        map[y + i, x + j] = 2; // Hit
                         UpdateShipState(y + i, x + j);
                         PrintShipState(); // Print ship state for debugging
                     }
-                    else if (CPU.mapCPU[y + i, x + j] == 0)
+                    else if (map[y + i, x + j] == 0)
                     {
-                        CPU.mapCPU[y + i, x + j] = 4; // Miss
+                        map[y + i, x + j] = 4; // Miss
                     }
                 }
             }
@@ -946,20 +956,20 @@ namespace App.lib
             }
         }
 
-        private void Torpedo(int x, int y){
-            if (CPU.mapCPU[y, x] == 1)
+        public void Torpedo(ref int[,] map, int x, int y){
+            if (map[y, x] == 1)
             {
-                CPU.mapCPU[y, x] = 2; // Hit
+                map[y, x] = 2; // Hit
                 UpdateShipState(y, x);
                 PrintShipState(); // Print ship state for debugging
             }
-            else if (CPU.mapCPU[y, x] == 0)
+            else if (map[y, x] == 0)
             {
-                CPU.mapCPU[y, x] = 4; // Miss
+                map[y, x] = 4; // Miss
             }
         }
 
-        private void Missile(int x, int y, bool orientation){
+        public void Missile(ref int[,] map, int x, int y, bool orientation){
             // If starting point is in the 0x 0y corner
             if (x == 0 && y == 0)
             {
@@ -968,15 +978,15 @@ namespace App.lib
                     // Vertical orientation
                     for (int i = 0; i < settings.mapHeight; i++)
                     {
-                        if (CPU.mapCPU[i, x] == 1)
+                        if (map[i, x] == 1)
                         {
-                            CPU.mapCPU[i, x] = 2; // Hit
+                            map[i, x] = 2; // Hit
                             UpdateShipState(i, x);
                             break;
                         }
                         else
                         {
-                            CPU.mapCPU[i, x] = 4; // Miss
+                            map[i, x] = 4; // Miss
                         }
                     }
                 }
@@ -985,15 +995,15 @@ namespace App.lib
                     // Horizontal orientation
                     for (int j = 0; j < settings.mapWidth; j++)
                     {
-                        if (CPU.mapCPU[y, j] == 1)
+                        if (map[y, j] == 1)
                         {
-                            CPU.mapCPU[y, j] = 2; // Hit
+                            map[y, j] = 2; // Hit
                             UpdateShipState(y, j);
                             break;
                         }
                         else
                         {
-                            CPU.mapCPU[y, j] = 4; // Miss
+                            map[y, j] = 4; // Miss
                         }
                     }
                 }
@@ -1003,15 +1013,15 @@ namespace App.lib
             {
                 for (int j = 0; j < settings.mapWidth; j++)
                 {
-                    if (CPU.mapCPU[y, j] == 1)
+                    if (map[y, j] == 1)
                     {
-                        CPU.mapCPU[y, j] = 2; // Hit
+                        map[y, j] = 2; // Hit
                         UpdateShipState(y, j);
                         break;
                     }
                     else
                     {
-                        CPU.mapCPU[y, j] = 4; // Miss
+                        map[y, j] = 4; // Miss
                     }
                 }
             }
@@ -1020,21 +1030,21 @@ namespace App.lib
                 // Starting from the top edge, vertical orientation
                 for (int i = 0; i < settings.mapHeight; i++)
                 {
-                    if (CPU.mapCPU[i, x] == 1)
+                    if (map[i, x] == 1)
                     {
-                        CPU.mapCPU[i, x] = 2; // Hit
+                        map[i, x] = 2; // Hit
                         UpdateShipState(i, x);
                         break;
                     }
                     else
                     {
-                        CPU.mapCPU[i, x] = 4; // Miss
+                        map[i, x] = 4; // Miss
                     }
                 }
             }
         }
 
-        private void Scanner(int x, int y)
+        public void Scanner(ref int[,] map, int x, int y)
         {
             mapMasking = false;
 
@@ -1044,17 +1054,17 @@ namespace App.lib
                 for (int j = x - 1; j <= x + 1; j++)
                 {
                     //this prints line 3X3 of scanned area
-                    if (i >= 0 && i < CPU.mapCPU.GetLength(0) && j >= 0 && j < CPU.mapCPU.GetLength(1))
+                    if (i >= 0 && i < map.GetLength(0) && j >= 0 && j < map.GetLength(1))
                     {
-                        if(CPU.mapCPU[i, j] == 1)
+                        if(map[i, j] == 1)
                         {
                             Console.ForegroundColor = settings.colorTheme ?? ConsoleColor.White;
                         }
-                        else if(CPU.mapCPU[i, j] == 2)
+                        else if(map[i, j] == 2)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                         }
-                        else if(CPU.mapCPU[i, j] == 4)
+                        else if(map[i, j] == 4)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                         }
@@ -1062,7 +1072,7 @@ namespace App.lib
                         {
                             Console.ForegroundColor = ConsoleColor.Blue;
                         }
-                        Console.Write(CPU.mapCPU[i, j] == 1 ? "S " : CPU.mapCPU[i, j] == 2 ? "X " : CPU.mapCPU[i, j] == 4 ? "O " : "~ ");
+                        Console.Write(map[i, j] == 1 ? "S " : map[i, j] == 2 ? "X " : map[i, j] == 4 ? "O " : "~ ");
                     }
                     else
                     {
@@ -1075,7 +1085,7 @@ namespace App.lib
             mapMasking = true;
         }
 
-        private void CarpetBomber(int x, int y, bool orientation)
+        public void CarpetBomber(ref int[,] map, int x, int y, bool orientation)
         {
             if (orientation)
             {
@@ -1084,14 +1094,14 @@ namespace App.lib
                 {
                     if (y + i < settings.mapHeight)
                     {
-                        if (CPU.mapCPU[y + i, x] == 1)
+                        if (map[y + i, x] == 1)
                         {
-                            CPU.mapCPU[y + i, x] = 2;
+                            map[y + i, x] = 2;
                             UpdateShipState(y + i, x);
                         }
                         else
                         {
-                            CPU.mapCPU[y + i, x] = 4;
+                            map[y + i, x] = 4;
                         }
                     }
                 }
@@ -1102,17 +1112,29 @@ namespace App.lib
                 {
                     if (x + j < settings.mapWidth)
                     {
-                        if (CPU.mapCPU[y, x + j] == 1)
+                        if (map[y, x + j] == 1)
                         {
-                            CPU.mapCPU[y, x + j] = 2;
+                            map[y, x + j] = 2;
                             UpdateShipState(y, x + j);
                         }
                         else
                         {
-                            CPU.mapCPU[y, x + j] = 4;
+                            map[y, x + j] = 4;
                         }
                     }
                 }
+            }
+        }
+
+        public void EMP()
+        {
+            if(turn)
+            {
+                empCPU = true;
+            }
+            else
+            {
+                empPlayer = true;
             }
         }
 
