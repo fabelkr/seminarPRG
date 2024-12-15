@@ -16,6 +16,8 @@ namespace App.lib.Computer
         public Dictionary<string, bool[,]> shipStateCPU = new Dictionary<string, bool[,]>();
         public int[,] mapCPU;
 
+        private string chosenWeaponCPU;
+
         // Constructor to initialize the settings and constructor objects
         public SetCPU(GameSettings settings, GameConstructor constructor)
         {
@@ -158,6 +160,45 @@ namespace App.lib.Computer
 
             // Store the ship positions in the dictionary
             shipPositionsMapCPU[shipName] = shipPositionsCPU;
+        }
+
+        public void SelectWeaponCPU()
+        {
+            bool valid = false;
+            Random startingWeaponIndex = new Random();
+            //rational
+            if(constructor.empCPU){
+                chosenWeaponCPU = settings.weaponNames[0];
+            }
+            else if(settings.difficulty == 1){
+                //set strategic starting weapon for CPU
+                if(constructor.turnIndex < 3){
+                    startingWeaponIndex.Next(1, 3);
+                    //missile
+                    if(Convert.ToInt32(startingWeaponIndex) == 1){
+                        chosenWeaponCPU = settings.weaponNames[1];
+                    }
+                    //Depth charge
+                    else{
+                        chosenWeaponCPU = settings.weaponNames[2];
+                    }
+                }
+                else{
+                    while(!valid){
+                        startingWeaponIndex.Next(1, settings.weaponSpecifications.Count + 1);
+                        if (settings.remainingWeaponUsage[Convert.ToInt32(startingWeaponIndex)])
+                        {
+                            valid = true;
+                        }
+                    }
+                    chosenWeaponCPU = settings.weaponNames[Convert.ToInt32(startingWeaponIndex)];
+                }
+            }
+            SetShotCoordinatesCPU(chosenWeaponCPU);
+        }
+
+        public void SetShotCoordinatesCPU(string weaponType){
+
         }
     }
 }

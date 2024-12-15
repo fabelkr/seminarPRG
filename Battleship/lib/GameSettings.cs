@@ -17,6 +17,46 @@ namespace App.lib
         public int? difficulty = null;
         public System.ConsoleColor? colorTheme = null;
 
+        public int[] rechargeTime = [
+            0, //Torpedo
+            0, //Missile
+            0, //Depth Charge
+            0, //Nuke
+            0, //EMP
+            0, //Scanner
+            0 //Carpet Bomber
+        ];
+
+        public int[] rechargeTimeCPU = [
+            0, //Torpedo
+            0, //Missile
+            0, //Depth Charge
+            0, //Nuke
+            0, //EMP
+            0, //Scanner
+            0 //Carpet Bomber
+        ];
+
+        public bool[] remainingWeaponUsage = [
+            true, //Torpedo
+            true, //Missile
+            true, //Depth Charge
+            true, //Nuke
+            true, //EMP
+            true, //Scanner
+            true //Carpet Bomber
+        ];
+
+        public bool[] remainingWeaponUsageCPU = [
+            true, //Torpedo
+            true, //Missile
+            true, //Depth Charge
+            true, //Nuke
+            true, //EMP
+            true, //Scanner
+            true //Carpet Bomber
+        ];
+
         public string[] weaponNames = [
             "Torpedo",
             "Missile",

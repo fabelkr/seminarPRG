@@ -5,6 +5,8 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Net;
+using System.Net.Sockets;
 using App.lib.Computer;
 using App.lib.RenderASCII;
 
@@ -21,13 +23,15 @@ namespace App.lib
         //0 = water, 1 = ship, 2 = hit, 3 = sunken ship, 4 = missed shot
         public int[,] map;
         private bool mapMasking = false;
-        bool empCPU = false;
+        public bool empCPU = false;
         bool empPlayer = false;
 
         private bool missileOrientation;
         private bool carpetOrientation;
         int sunkenShipCounter = 0;
         int sunkenShipCounterCPU = 0;
+
+        public int turnIndex = 1;
 
         public int selectedWeapon;
 
@@ -158,7 +162,6 @@ namespace App.lib
             Console.WriteLine("All ships are placed on the map. The game is ready to start.");
             Console.WriteLine("Press any key to start the game.");
             Console.ReadKey();
-            Console.Clear();
             CPU.GetCPUSet();
             StartGame();
         }
@@ -461,30 +464,58 @@ namespace App.lib
 
         private void StartGame()
         {
+            Console.Clear();
             int empDurationPlayer = 3;
             //TODO: TEST
             // mapMasking = true;
             mapMasking = false;
             Atomic.StartGameMessage();
 
+            while (true)
+            {
+                Console.WriteLine(Atomic.MapViewAnouncement(mapView));
+                if (mapView)
+                {
+                    PrintMap(ref map);
+                }
+                else
+                {
+                    PrintMap(ref CPU.mapCPU);
+                }
+
+                Console.WriteLine("Type 'map' to switch views or press Enter to continue.");
+                string input = Console.ReadLine();
+
+                if (input == "map")
+                {
+                    mapView = !mapView;
+                    mapMasking = false;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
             while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
             {
-                if (turn == true){
-                    //TODO: map change from weapon select
-                    Console.WriteLine(Atomic.MapViewAnouncement(mapView));
-                    if(mapView){
-                        PrintMap(ref map);
-                    }
-                    else{
-                        PrintMap(ref CPU.mapCPU);
-                    }
-                    if(Console.ReadLine() == "map"){
-                        mapView = !mapView;
-                        mapMasking = false;
-                        StartGame();
+                if (turn){
+                    
+                    if(settings.rechargeTime.Any(x => x > 0)){
+                        
+                        for(int i = 0; i < settings.rechargeTime.Length; i++){
+
+                            if(settings.rechargeTime[i] > 0){
+                                settings.rechargeTime[i]--;
+
+                                if(settings.rechargeTime[i] == 0){
+                                    settings.remainingWeaponUsage[i] = true;
+                                }
+                            }
+                        }
                     }
 
-                    if(empPlayer == true){
+                    if(empPlayer){
                         Console.WriteLine("You have been hit by EMP strike. You can use only torpedo, this efect will last for: " + empDurationPlayer + " turns.");
                         Console.WriteLine("Press any key to shoot with torpedo");
                         Console.ReadKey();
@@ -495,37 +526,58 @@ namespace App.lib
                             empDurationPlayer = 3;
                         }
                     }
-                    else{
-                        for (int i = 0; i < settings.weaponSpecifications.Count; i++){
+                    else
+                    {
+                        bool validWeaponSelected = false;
 
+                        while (!validWeaponSelected)
+                        {
+                            for (int i = 0; i < settings.weaponSpecifications.Count; i++)
+                            {
                                 var weapon = settings.weaponSpecifications.ElementAt(i);
                                 Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
-                        }
+                            }
 
-                        Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
+                            Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
 
-                        for(int i = 1; i <= settings.weaponSpecifications.Count; i++)
-                        {
-                            indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
-                        }
+                            for (int i = 1; i <= settings.weaponSpecifications.Count; i++)
+                            {
+                                indexOfSelectedWeapon[i] = settings.weaponSpecifications.ElementAt(i - 1).Key;
+                            }
 
-                        if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
-                        {
-                            string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
-                            Console.WriteLine("Selected weapon: " + selectedWeaponName);
+                            if (int.TryParse(Console.ReadLine(), out selectedWeapon) && indexOfSelectedWeapon.ContainsKey(selectedWeapon))
+                            {
+                                string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
+                                int weaponIndex = Array.IndexOf(settings.weaponNames, selectedWeaponName);
 
-                            SetShotCoordinates(selectedWeaponName);
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Invalid input. Please select a ship from the list.");
-                            Atomic.GameSettingsError();
+                                if (settings.rechargeTime[weaponIndex] > 0)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("This weapon is recharging. Please select another weapon.");
+                                    Console.ResetColor();
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Selected weapon: " + selectedWeaponName);
+                                    SetShotCoordinates(selectedWeaponName);
+                                    validWeaponSelected = true;
+                                }
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Invalid input. Please select a weapon from the list.");
+                                Console.ResetColor();
+                            }
                         }
                     }
+                    turn = false;
+                    turnIndex++;
                 }
                 else{
-                    
+                    CPU.SelectWeaponCPU();
+                    turn = true;
+                    turnIndex++;
                 }
             }
         }
@@ -574,6 +626,7 @@ namespace App.lib
                     Console.ResetColor();
                     SetShotCoordinates("Carpet Bomber");
                 }
+                settings.remainingWeaponUsage[6] = false;
             }
             else if(weaponType == "Missile"){
                 Console.WriteLine("You can send the missile from the sides of the map only.");
@@ -629,9 +682,13 @@ namespace App.lib
                             Console.WriteLine("Do you wnat to shoot horizontally or vertically?");
                             Console.WriteLine("1. Horizontal\n2. Vertical");
                             if(Console.ReadLine() == "1"){
+                                settings.rechargeTime[1] = 5;
+                                settings.remainingWeaponUsage[1] = false;
                                 missileOrientation = false;
                             }
                             else{
+                                settings.rechargeTime[1] = 5;
+                                settings.remainingWeaponUsage[1] = false;
                                 missileOrientation = true;
                             }
                         }
@@ -690,14 +747,15 @@ namespace App.lib
             if (x < 0 || x + weaponWidth > width || y < 0 || y + weaponHeight > height)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("You are shooting outside the map. Do you want to set new coordinates? (y/n)");
+                Console.WriteLine("You are shooting outside the map. You need to change the coordinates by pressing enter (or if you resist to do so, type \"no\" and let the game crash).");
                 Console.ResetColor();
-                if (Console.ReadLine() == "y")
+                if (Console.ReadLine() == "no")
+                {
+                    RenderMatrixEffect();
+                }
+                else
                 {
                     SetShotCoordinates(weaponName);
-                }
-                else if (Console.ReadLine() == "n")
-                {
 
                 }
             }
@@ -793,11 +851,15 @@ namespace App.lib
                         {
                             Console.WriteLine($"Ship {shipName} is sunk!");
                             sunkenShipCounter++;
+                            settings.remainingWeaponUsage[6] = true;
+                            settings.remainingWeaponUsage[4] = true;
                         }
                         else
                         {
-                        Console.WriteLine($"Ship {shipName} is sunk!");
-                        sunkenShipCounterCPU++;
+                            Console.WriteLine($"Ship {shipName} is sunk!");
+                            sunkenShipCounterCPU++;
+                            settings.remainingWeaponUsageCPU[6] = true;
+                            settings.remainingWeaponUsageCPU[4] = true;
                         }
                     }
 
@@ -1052,6 +1114,76 @@ namespace App.lib
                     }
                 }
             }
+        }
+
+        private void RenderMatrixEffect()
+        {
+            Console.Clear();
+            Random random = new Random();
+            int width = Console.WindowWidth;
+            int height = Console.WindowHeight;
+
+            // Get non-sensitive information
+            string username = Environment.UserName;
+            string machineName = Environment.MachineName;
+            string osVersion = Environment.OSVersion.ToString();
+            string currentDirectory = Environment.CurrentDirectory;
+            string systemDirectory = Environment.SystemDirectory;
+            int processorCount = Environment.ProcessorCount;
+            string userDomainName = Environment.UserDomainName;
+            string ipAddress = GetLocalIPAddress();
+
+            // Extend the duration of the effect
+            for (int frame = 0; frame < 20; frame++)
+            {
+                for (int i = 0; i < height; i++)
+                {
+                    for (int j = 0; j < width; j++)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.Write((char)random.Next(0x4E00, 0x9FFF));
+                    }
+                    Console.WriteLine();
+                }
+                System.Threading.Thread.Sleep(100);
+                Console.Clear();
+            }
+
+            // Add a flashing warning message
+            for (int flash = 0; flash < 5; flash++)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"WARNING: SYSTEM FAILURE IMMINENT, {username.ToUpper()}");
+                System.Threading.Thread.Sleep(500);
+                Console.Clear();
+                System.Threading.Thread.Sleep(500);
+            }
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Clear();
+            Console.WriteLine($"Machine Name: {machineName}");
+            Console.WriteLine($"OS Version: {osVersion}");
+            Console.WriteLine($"Current Directory: {currentDirectory}");
+            Console.WriteLine($"System Directory: {systemDirectory}");
+            Console.WriteLine($"Processor Cores: {processorCount}");
+            Console.WriteLine($"User Domain Name: {userDomainName}");
+            Console.WriteLine($"IP Address: {ipAddress}");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Just kidding, {username}! Please enter valid coordinates next time.");
+            Console.ResetColor();
+        }
+
+        private string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
         }
     }
 }
