@@ -17,6 +17,9 @@ namespace App.lib
         public int? difficulty = null;
         public System.ConsoleColor? colorTheme = null;
 
+        public int rechargeTimeEMP = 0;
+        public int rechargeTimeEMPCPU = 0;
+
         public int[] rechargeTime = [
             0, //Torpedo
             0, //Missile
@@ -272,7 +275,7 @@ namespace App.lib
             Console.WriteLine("      - Missile: 1 X 1 - fires one shot from start/end of the row/column and hits the first ship in the row/column if there is any - every 5 turns recharges");
             Console.WriteLine("      - Depth Charge: 3 X 3 - fires a projectile to a desired location (epicentre) and hits all ships in the area - single use");
             Console.WriteLine("      - Nuke: 5 X 5 - fires a projectile to a desired location (epicentre) and hits all ships in the area - single use");
-            Console.WriteLine("      - EMP: global impact - prevents enemy from using high tech weapons (Nuke, EMP, Scanner, Carpet Bomber) and will be blinded for 2 turns - recharges on kill");
+            Console.WriteLine("      - EMP: global impact - prevents enemy from using high tech weapons (Missile, Nuke, EMP, Scanner, Carpet Bomber) for 3 turns - recharges on kill");
             Console.WriteLine("      - Scanner: 3 X 3 - scans desired area for enemy ships - single use");
             Console.WriteLine("      - Carpet Bomber: 1 X 2 - drops bombs in a line - recharges on kill\n");
 
