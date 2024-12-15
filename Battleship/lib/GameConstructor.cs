@@ -9,13 +9,15 @@ using System.Net;
 using System.Net.Sockets;
 using App.lib.Computer;
 using App.lib.RenderASCII;
-
+//TODO: testing testing and testing
+//TODO: implement weapon recharge logic for CPU
+//TODO: Add ASCII art for ships
 namespace App.lib
 {
     public class GameConstructor
     {
-        private Dictionary<string, bool[,]> shipState;
-        private Dictionary<string, List<(int, int)>> shipPositionsMap = new Dictionary<string, List<(int, int)>>();
+        public Dictionary<string, bool[,]> shipState;
+        public Dictionary<string, List<(int, int)>> shipPositionsMap = new Dictionary<string, List<(int, int)>>();
 
         //Player plays = true, CPU plays = false
         public bool turn = true;
@@ -24,12 +26,12 @@ namespace App.lib
         public int[,] map;
         private bool mapMasking = false;
         public bool empCPU = false;
-        bool empPlayer = false;
+        public bool empPlayer = false;
 
         private bool missileOrientation;
         private bool carpetOrientation;
         int sunkenShipCounter = 0;
-        int sunkenShipCounterCPU = 0;
+        public int sunkenShipCounterCPU = 0;
 
         public int turnIndex = 1;
 
@@ -476,9 +478,10 @@ namespace App.lib
         {
             Console.Clear();
             int empDurationPlayer = 3;
+            int empDurationCPU = 3;
             //TODO: TEST
-            // mapMasking = true;
-            mapMasking = false;
+            mapMasking = true;
+            // mapMasking = false;
             Atomic.StartGameMessage();
 
             while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
@@ -503,7 +506,7 @@ namespace App.lib
                         if (input == "map")
                         {
                             mapView = !mapView;
-                            mapMasking = false;
+                            // mapMasking = false;
                         }
                         else
                         {
@@ -545,7 +548,23 @@ namespace App.lib
                             for (int i = 0; i < settings.weaponSpecifications.Count; i++)
                             {
                                 var weapon = settings.weaponSpecifications.ElementAt(i);
-                                Console.WriteLine(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ")");
+                                Console.Write(i + 1 + ". " + weapon.Key + " (" + weapon.Value[0] + " X " + weapon.Value[1] + ") (weapon ready: ");
+                                if(settings.remainingWeaponUsage[4] == false && weapon.Key == "EMP"){
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.Write("no");
+                                }
+                                else if (settings.remainingWeaponUsage[i])
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.Write("yes");
+                                }
+                                else
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.Write("no");
+                                }
+                                Console.ResetColor();
+                                Console.WriteLine(")");
                             }
 
                             Dictionary<int, string> indexOfSelectedWeapon = new Dictionary<int, string>();
@@ -560,7 +579,18 @@ namespace App.lib
                                 string selectedWeaponName = indexOfSelectedWeapon[selectedWeapon];
                                 int weaponIndex = Array.IndexOf(settings.weaponNames, selectedWeaponName);
 
-                                if (settings.rechargeTime[weaponIndex] > 0)
+                                if(settings.rechargeTime[weaponIndex] > 5000){
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("This is a single use weapon, you can't use it anymore.");
+                                    Console.ResetColor();
+                                }
+                                else if (selectedWeaponName == "EMP" && settings.rechargeTimeEMP > 0)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("You need to sink enemy ship to use EMP again. Please select another weapon.");
+                                    Console.ResetColor();
+                                }
+                                else if (settings.rechargeTime[weaponIndex] > 0)
                                 {
                                     Console.ForegroundColor = ConsoleColor.Red;
                                     Console.WriteLine("This weapon is recharging. Please select another weapon.");
@@ -588,7 +618,13 @@ namespace App.lib
                     CPU.SelectWeaponCPU();
                     turn = true;
                     turnIndex++;
-                    Console.WriteLine("Tady jeste je");
+                    if(empCPU){
+                        empDurationCPU--;
+                        if(empDurationCPU == 0){
+                            empCPU = false;
+                            empDurationCPU = 3;
+                        }
+                    }
                 }
             }
         }
@@ -709,6 +745,12 @@ namespace App.lib
                         missileOrientation = true;
                         break;
                 }
+                settings.remainingWeaponUsage[1] = false;
+                settings.rechargeTime[1] = 5;
+            }
+            else if(weaponType == "EMP"){
+                x = 0;
+                y = 0;
             }
             else{
                 Console.WriteLine("Enter the target coordinates");
@@ -807,13 +849,13 @@ namespace App.lib
                 Console.WriteLine("Invalid weapon name.");
             }
 
-            // TODO: TEST
-            mapMasking = false;
-            PrintMap(ref CPU.mapCPU);
+            // // TODO: TEST
+            // mapMasking = false;
+            // PrintMap(ref CPU.mapCPU);
             mapMasking = true;
-            PrintMap(ref CPU.mapCPU);
-            mapMasking = false;
-            PrintMap(ref CPU.mapCPU);
+            // PrintMap(ref CPU.mapCPU);
+            // mapMasking = false;
+            // PrintMap(ref CPU.mapCPU);
         }
 
         private void UpdateShipState(int y, int x)
@@ -895,6 +937,8 @@ namespace App.lib
                 int x = position.Item2;
                 CPU.mapCPU[y, x] = 3; // Assign the value 3 to the map coordinates
             }
+            settings.remainingWeaponUsage[4] = true;
+            settings.rechargeTimeEMP = 0;
             return true; // Ship is completely sunk
         }
 
@@ -910,7 +954,12 @@ namespace App.lib
                     if (map[y + i, x + j] == 1)
                     {
                         map[y + i, x + j] = 2; // Hit
-                        UpdateShipState(y + i, x + j);
+                        if(map == CPU.mapCPU){
+                            UpdateShipState(y + i, x + j);
+                        }
+                        else{
+                            CPU.UpdateShipStateCPU(y + i, x + j);
+                        }
                         PrintShipState(); // Print ship state for debugging
                     }
                     else if (map[y + i, x + j] == 0)
@@ -918,6 +967,14 @@ namespace App.lib
                         map[y + i, x + j] = 4; // Miss
                     }
                 }
+            }
+            if(weaponName == "Depth Charge"){
+                settings.remainingWeaponUsage[2] = false;
+                settings.rechargeTime[2] = 7000;
+            }
+            else{
+                settings.remainingWeaponUsage[3] = false;
+                settings.rechargeTime[3] = 7000;
             }
         }
 
@@ -960,7 +1017,12 @@ namespace App.lib
             if (map[y, x] == 1)
             {
                 map[y, x] = 2; // Hit
-                UpdateShipState(y, x);
+                if(map == CPU.mapCPU){
+                    UpdateShipState(y, x);
+                }
+                else{
+                    CPU.UpdateShipStateCPU(y, x);
+                }
                 PrintShipState(); // Print ship state for debugging
             }
             else if (map[y, x] == 0)
@@ -981,7 +1043,12 @@ namespace App.lib
                         if (map[i, x] == 1)
                         {
                             map[i, x] = 2; // Hit
-                            UpdateShipState(i, x);
+                            if(map == CPU.mapCPU){
+                                UpdateShipState(i, x);
+                            }
+                            else{
+                                CPU.UpdateShipStateCPU(i, x);
+                            }
                             break;
                         }
                         else
@@ -998,7 +1065,12 @@ namespace App.lib
                         if (map[y, j] == 1)
                         {
                             map[y, j] = 2; // Hit
-                            UpdateShipState(y, j);
+                            if(map == CPU.mapCPU){
+                                UpdateShipState(y, j);
+                            }
+                            else{
+                                CPU.UpdateShipStateCPU(y, j);
+                            }
                             break;
                         }
                         else
@@ -1016,7 +1088,12 @@ namespace App.lib
                     if (map[y, j] == 1)
                     {
                         map[y, j] = 2; // Hit
-                        UpdateShipState(y, j);
+                        if(map == CPU.mapCPU){
+                            UpdateShipState(y, j);
+                        }
+                        else{
+                            CPU.UpdateShipStateCPU(y, j);
+                        }
                         break;
                     }
                     else
@@ -1033,7 +1110,12 @@ namespace App.lib
                     if (map[i, x] == 1)
                     {
                         map[i, x] = 2; // Hit
-                        UpdateShipState(i, x);
+                        if(map == CPU.mapCPU){
+                            UpdateShipState(i, x);
+                        }
+                        else{
+                            CPU.UpdateShipStateCPU(i, x);
+                        }
                         break;
                     }
                     else
@@ -1097,7 +1179,12 @@ namespace App.lib
                         if (map[y + i, x] == 1)
                         {
                             map[y + i, x] = 2;
+                        if(map == CPU.mapCPU){
                             UpdateShipState(y + i, x);
+                        }
+                        else{
+                            CPU.UpdateShipStateCPU(y + i, x);
+                        }
                         }
                         else
                         {
@@ -1115,7 +1202,12 @@ namespace App.lib
                         if (map[y, x + j] == 1)
                         {
                             map[y, x + j] = 2;
-                            UpdateShipState(y, x + j);
+                            if(map == CPU.mapCPU){
+                                UpdateShipState(y, x + j);
+                            }
+                            else{
+                                CPU.UpdateShipStateCPU(y, x + j);
+                            }
                         }
                         else
                         {
@@ -1130,6 +1222,8 @@ namespace App.lib
         {
             if(turn)
             {
+                settings.remainingWeaponUsage[4] = false;
+                settings.rechargeTimeEMP = 2500;
                 empCPU = true;
             }
             else

@@ -167,13 +167,13 @@ namespace App.lib.Computer
 
         public void SelectWeaponCPU()
         {
-            //TODO: Validate if the weapon is in the weaponSpecifications
             //TODO: Fix the wepon charge limits
             bool valid = false;
             Random WeaponIndex = new Random();
             
             //rational
             if(constructor.empCPU){
+                Console.WriteLine("EMP is active");
                 chosenWeaponCPU = settings.weaponNames[0];
             }
             else if(settings.difficulty == 1){
@@ -190,16 +190,24 @@ namespace App.lib.Computer
                     }
                 }
                 else{
-                    int usedWeaponIndex = WeaponIndex.Next(1, settings.weaponSpecifications.Count + 1);
                     while(!valid){
-                        if (settings.remainingWeaponUsage[usedWeaponIndex])
+                        int usedWeaponIndex = WeaponIndex.Next(1, settings.weaponSpecifications.Count + 1);
+                        chosenWeaponCPU = settings.weaponNames[usedWeaponIndex];
+                        if(chosenWeaponCPU == "EMP" && constructor.empPlayer){
+                            valid = false;
+                        }
+                        else if (settings.remainingWeaponUsageCPU[usedWeaponIndex] && settings.weaponSpecifications.ContainsKey(chosenWeaponCPU))
+                        {
+                            valid = true;
+                        }
+                        else if (settings.remainingWeaponUsage[usedWeaponIndex] && settings.weaponSpecifications.ContainsKey(chosenWeaponCPU))
                         {
                             valid = true;
                         }
                     }
-                    chosenWeaponCPU = settings.weaponNames[usedWeaponIndex];
                 }
             }
+            Console.WriteLine($"CPU chose {chosenWeaponCPU}");
             SetShotCoordinatesCPU(chosenWeaponCPU);
         }
 
@@ -270,6 +278,76 @@ namespace App.lib.Computer
                 }
                 constructor.CarpetBomber(ref constructor.map, xC, yC, carpetOrientationCPU);
             }
+        }
+
+        public void UpdateShipStateCPU(int a, int b){
+            Console.WriteLine($"Updating ship state for hit at ({a}, {b})");
+
+            foreach (var ship in constructor.shipPositionsMap)
+            {
+                string shipName = ship.Key;
+                List<(int, int)> shipPositions = ship.Value;
+
+                // Check if the hit coordinates match any of the ship's positions
+                if (shipPositions.Contains((a, b)))
+                {
+                    Console.WriteLine($"Marking position ({a}, {b}) of ship {shipName} as hit");
+
+                    // Directly update the ship's state in the shipStateCPU dictionary
+                    for (int i = 0; i < shipPositions.Count; i++)
+                    {
+                        if (shipPositions[i] == (a, b))
+                        {
+                            // Find the exact position in the shipCoordinates array
+                            for (int j = 0; j < constructor.shipState[shipName].GetLength(0); j++)
+                            {
+                                for (int k = 0; k < constructor.shipState[shipName].GetLength(1); k++)
+                                {
+                                    if (shipPositions[j * constructor.shipState[shipName].GetLength(1) + k] == (a, b))
+                                    {
+                                        constructor.shipState[shipName][j, k] = true; // Mark the position as hit
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (IsShipSunkCPU(shipName))
+                    {
+                            Console.WriteLine($"Ship {shipName} is sunk!");
+                            constructor.sunkenShipCounterCPU++;
+                            settings.remainingWeaponUsageCPU[6] = true;
+                            settings.remainingWeaponUsageCPU[4] = true;
+                    }
+
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine($"No hit at ({a}, {b}) for ship {shipName}");
+                }
+            }
+        }
+
+        private bool IsShipSunkCPU(string shipName){
+            bool[,] shipCoordinates = constructor.shipState[shipName];
+            for (int i = 0; i < shipCoordinates.GetLength(0); i++)
+            {
+                for (int j = 0; j < shipCoordinates.GetLength(1); j++)
+                {
+                    if (!shipCoordinates[i, j])
+                    {
+                        return false; // Ship is not completely sunk
+                    }
+                }
+            }
+            foreach (var position in constructor.shipPositionsMap[shipName])
+            {
+                int y = position.Item1;
+                int x = position.Item2;
+                constructor.map[y, x] = 3; // Assign the value 3 to the map coordinates
+            }
+            return true; // Ship is completely sunk
         }
     }
 }
