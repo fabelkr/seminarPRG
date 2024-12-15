@@ -527,6 +527,19 @@ namespace App.lib
                             }
                         }
                     }
+                    if(settings.rechargeTimeCPU.Any(x => x > 0)){
+
+                        for(int i = 0; i < settings.rechargeTimeCPU.Length; i++){
+
+                            if(settings.rechargeTimeCPU[i] > 0){
+                                settings.rechargeTimeCPU[i]--;
+
+                                if(settings.rechargeTimeCPU[i] == 0){
+                                    settings.remainingWeaponUsageCPU[i] = true;
+                                }
+                            }
+                        }
+                    }
 
                     if(empPlayer){
                         Console.WriteLine("You have been hit by EMP strike. You can use only torpedo, this efect will last for: " + empDurationPlayer + " turns.");
@@ -685,7 +698,7 @@ namespace App.lib
                         Console.WriteLine("Enter the column coordinate (x):");
                         if (int.TryParse(Console.ReadLine(), out x) && x >= 0 && x < settings.mapWidth)
                         {
-                            break;
+
                         }
                         else
                         {
@@ -713,7 +726,7 @@ namespace App.lib
                         Console.WriteLine("Enter the row (y):");
                         if (int.TryParse(Console.ReadLine(), out y) && y >= 0 && y < settings.mapHeight)
                         {
-                            break;
+
                         }
                         else
                         {
@@ -785,11 +798,11 @@ namespace App.lib
                     }
                 }
             }
-            ValidateShotCoordinates(weaponType, x, y);
+            ValidateShotCoordinates(weaponType, ref x, ref y);
             Fire(weaponType, x, y);
         }
 
-        private void ValidateShotCoordinates(string weaponName, int x, int y)
+        private void ValidateShotCoordinates(string weaponName, ref int x, ref int y)
         {
             int width = settings.mapWidth ?? 10;
             int height = settings.mapHeight ?? 10;
@@ -808,8 +821,37 @@ namespace App.lib
                 }
                 else
                 {
-                    SetShotCoordinates(weaponName);
+                    bool valid = false;
+                    while (!valid)
+                    {
+                        Console.WriteLine("Enter new x coordinate:");
+                        if (int.TryParse(Console.ReadLine(), out x) && x >= 0 && x + weaponWidth <= width)
+                        {
+                            valid = true;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Invalid input. Please enter a valid number for the x coordinate.");
+                            Console.ResetColor();
+                        }
+                    }
 
+                    valid = false;
+                    while (!valid)
+                    {
+                        Console.WriteLine("Enter new y coordinate:");
+                        if (int.TryParse(Console.ReadLine(), out y) && y >= 0 && y + weaponHeight <= height)
+                        {
+                            valid = true;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Invalid input. Please enter a valid number for the y coordinate.");
+                            Console.ResetColor();
+                        }
+                    }
                 }
             }
         }
@@ -942,7 +984,7 @@ namespace App.lib
             return true; // Ship is completely sunk
         }
 
-        public void DepthCharge(ref int[,] map, string weaponName, int x, int y)
+        public void DepthCharge(ref int[,] objectiveMap, string weaponName, int x, int y)
         {
             int weaponWidth = settings.weaponSpecifications[weaponName][0];
             int weaponHeight = settings.weaponSpecifications[weaponName][1];
@@ -951,52 +993,60 @@ namespace App.lib
             {
                 for (int j = 0; j < weaponWidth; j++)
                 {
-                    if (map[y + i, x + j] == 1)
+                    if (objectiveMap[y + i, x + j] == 1)
                     {
-                        map[y + i, x + j] = 2; // Hit
-                        if(map == CPU.mapCPU){
+                        objectiveMap[y + i, x + j] = 2; // Hit
+                        if(objectiveMap == CPU.mapCPU){
                             UpdateShipState(y + i, x + j);
+                            if(weaponName == "Depth Charge"){
+                                settings.remainingWeaponUsage[2] = false;
+                                settings.rechargeTime[2] = 7000;
+                            }
+                            else{
+                                settings.remainingWeaponUsage[3] = false;
+                                settings.rechargeTime[3] = 7000;
+                            }
                         }
-                        else{
+                        else if (objectiveMap == map){
                             CPU.UpdateShipStateCPU(y + i, x + j);
+                            if(weaponName == "Depth Charge"){
+                                settings.remainingWeaponUsageCPU[2] = false;
+                                settings.rechargeTimeCPU[2] = 7000;
+                            }
+                            else{
+                                settings.remainingWeaponUsage[3] = false;
+                                settings.rechargeTimeCPU[3] = 7000;
+                            }
                         }
-                        PrintShipState(); // Print ship state for debugging
+                        // PrintShipState();
                     }
-                    else if (map[y + i, x + j] == 0)
+                    else if (objectiveMap[y + i, x + j] == 0)
                     {
-                        map[y + i, x + j] = 4; // Miss
+                        objectiveMap[y + i, x + j] = 4; // Miss
                     }
                 }
             }
-            if(weaponName == "Depth Charge"){
-                settings.remainingWeaponUsage[2] = false;
-                settings.rechargeTime[2] = 7000;
-            }
-            else{
-                settings.remainingWeaponUsage[3] = false;
-                settings.rechargeTime[3] = 7000;
-            }
         }
+        //TEST
+        // private void PrintShipState()
+        // {
+        //     foreach (KeyValuePair<string, bool[,]> state in CPU.shipStateCPU)
+        //     {
+        //         Console.WriteLine("Ship name: " + state.Key);
 
-        private void PrintShipState()
-        {
-            foreach (KeyValuePair<string, bool[,]> state in CPU.shipStateCPU)
-            {
-                Console.WriteLine("Ship name: " + state.Key);
+        //         for (int i = 0; i < state.Value.GetLength(0); i++)
+        //         {
+        //             for (int j = 0; j < state.Value.GetLength(1); j++)
+        //             {
+        //                 Console.Write(state.Value[i, j] ? "1 " : "0 ");
+        //             }
+        //             Console.WriteLine();
+        //         }
+        //         Console.WriteLine();
+        //     }
 
-                for (int i = 0; i < state.Value.GetLength(0); i++)
-                {
-                    for (int j = 0; j < state.Value.GetLength(1); j++)
-                    {
-                        Console.Write(state.Value[i, j] ? "1 " : "0 ");
-                    }
-                    Console.WriteLine();
-                }
-                Console.WriteLine();
-            }
-
-            PrintShipCoordinates();
-        }
+        //     PrintShipCoordinates();
+        // }
 
         private void PrintShipCoordinates()
         {
@@ -1023,11 +1073,15 @@ namespace App.lib
                 else{
                     CPU.UpdateShipStateCPU(y, x);
                 }
-                PrintShipState(); // Print ship state for debugging
+                //PrintShipState();
             }
             else if (map[y, x] == 0)
             {
                 map[y, x] = 4; // Miss
+            }
+            else if (map[y, x] == 4)
+            {
+                Console.WriteLine("You have already hit this position.");
             }
         }
 
@@ -1048,6 +1102,8 @@ namespace App.lib
                             }
                             else{
                                 CPU.UpdateShipStateCPU(i, x);
+                                settings.rechargeTimeCPU[1] = 5;
+                                settings.remainingWeaponUsageCPU[1] = false;
                             }
                             break;
                         }
@@ -1070,6 +1126,8 @@ namespace App.lib
                             }
                             else{
                                 CPU.UpdateShipStateCPU(y, j);
+                                settings.rechargeTimeCPU[1] = 5;
+                                settings.remainingWeaponUsageCPU[1] = false;
                             }
                             break;
                         }
