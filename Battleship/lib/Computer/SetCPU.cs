@@ -233,22 +233,32 @@ namespace App.lib.Computer
         public void SetShotCoordinatesCPU(string weaponType){
             bool valid = false;
             Random setShotCoordinatesCPU = new Random();
+            List<(int, int)> itemsToRemove = new List<(int, int)>();
 
-            var matchingCoordinates = allHitCoordinates.Where(forbidenCoordinates.Contains).ToList();
-            foreach (var match in matchingCoordinates)
+            foreach (var forbiden in allHitCoordinates)
             {
-                allHitCoordinates.Remove(match);
+                if (constructor.map[forbiden.Item1, forbiden.Item2] == 3)
+                {
+                    Console.WriteLine($"Forbiden coordinates: ({forbiden.Item1}, {forbiden.Item2}) - removing");
+                    itemsToRemove.Add(forbiden);
+                }
+            }
+
+            // Remove the collected items after the iteration
+            foreach (var item in itemsToRemove)
+            {
+                allHitCoordinates.Remove(item);
             }
 
             foreach (var coord in allHitCoordinates)
             {
-                if(constructor.map[coord.Item1, coord.Item2] == 3){
+                if(constructor.map[coord.Item2, coord.Item1] == 3){
                     forbidenCoordinates.Add(coord);
                 }
             }
             foreach (var forbiden in forbidenCoordinates)
             {
-                Console.WriteLine($"Forbiden coordinates: ({forbiden.Item1}, {forbiden.Item2})");
+                Console.WriteLine($"Forbiden coordinates: ({forbiden.Item2}, {forbiden.Item1})");
             }
 
             if(allHitCoordinates.Count == 0 || allHitCoordinates.All(coord => constructor.map[coord.Item1, coord.Item2] == 3)){
@@ -432,7 +442,7 @@ namespace App.lib.Computer
             }
         }
         public void UpdateShipStateCPU(int a, int b){
-            Console.WriteLine($"Updating ship state for hit at ({a}, {b})");
+            Console.WriteLine($"Updating ship state for hit at ({b}, {a})");
 
             foreach (var ship in constructor.shipPositionsMap)
             {
