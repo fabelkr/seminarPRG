@@ -10,7 +10,7 @@ using System.Net.Sockets;
 using App.lib.Computer;
 using App.lib.RenderASCII;
 //TODO: testing testing and testing
-//TODO: implement weapon recharge logic for CPU
+//TODO: Border check for scanner is retarded, fix required. Logs out of bounds even though it is inside (8x, 2y) on 10 X 10 map.
 //TODO: Add ASCII art for ships
 namespace App.lib
 {
@@ -83,10 +83,6 @@ namespace App.lib
 
         public void CreateNewGame()
         {
-            //TEST
-            // Console.WriteLine(settings.mapType);
-            // Console.WriteLine(settings.mapHeight);
-            // Console.WriteLine(settings.mapWidth);
                 //TODO: TEST
                 foreach (KeyValuePair <string, bool[,]> state in shipState){
                     Console.WriteLine("name:" + state.Key + "value" + state.Value);
@@ -479,24 +475,31 @@ namespace App.lib
             Console.Clear();
             int empDurationPlayer = 3;
             int empDurationCPU = 3;
-            //TODO: TEST
             mapMasking = true;
-            // mapMasking = false;
             Atomic.StartGameMessage();
 
             while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
             {
                 if (turn){
+                    
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Your points: " + sunkenShipCounter + " Ships sunk");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("CPU points" + sunkenShipCounterCPU + " Ships sunk");
+                    Console.ResetColor();
+
 
                     while (true)
                     {
                         Console.WriteLine(Atomic.MapViewAnouncement(mapView));
                         if (mapView)
                         {
+                            mapMasking = false;
                             PrintMap(ref map);
                         }
                         else
                         {
+                            mapMasking = true;
                             PrintMap(ref CPU.mapCPU);
                         }
 
@@ -530,7 +533,6 @@ namespace App.lib
                     if(settings.rechargeTimeCPU.Any(x => x > 0)){
 
                         for(int i = 0; i < settings.rechargeTimeCPU.Length; i++){
-
                             if(settings.rechargeTimeCPU[i] > 0){
                                 settings.rechargeTimeCPU[i]--;
 
@@ -890,20 +892,11 @@ namespace App.lib
             {
                 Console.WriteLine("Invalid weapon name.");
             }
-
-            // // TODO: TEST
-            // mapMasking = false;
-            // PrintMap(ref CPU.mapCPU);
             mapMasking = true;
-            // PrintMap(ref CPU.mapCPU);
-            // mapMasking = false;
-            // PrintMap(ref CPU.mapCPU);
         }
 
         private void UpdateShipState(int y, int x)
         {
-            Console.WriteLine($"Updating ship state for hit at ({x}, {y})");
-
             foreach (var ship in CPU.shipPositionsMapCPU)
             {
                 string shipName = ship.Key;
@@ -912,8 +905,6 @@ namespace App.lib
                 // Check if the hit coordinates match any of the ship's positions
                 if (shipPositions.Contains((y, x)))
                 {
-                    Console.WriteLine($"Marking position ({x}, {y}) of ship {shipName} as hit");
-
                     // Directly update the ship's state in the shipStateCPU dictionary
                     for (int i = 0; i < shipPositions.Count; i++)
                     {
@@ -940,22 +931,19 @@ namespace App.lib
                             Console.WriteLine($"Ship {shipName} is sunk!");
                             sunkenShipCounter++;
                             settings.remainingWeaponUsage[6] = true;
-                            settings.remainingWeaponUsage[4] = true;
+                            settings.remainingWeaponUsage[4] = true;  
                         }
                         else
                         {
-                            Console.WriteLine($"Ship {shipName} is sunk!");
                             sunkenShipCounterCPU++;
                             settings.remainingWeaponUsageCPU[6] = true;
                             settings.remainingWeaponUsageCPU[4] = true;
+                            Console.ReadKey();
                         }
+
                     }
 
                     return;
-                }
-                else
-                {
-                    Console.WriteLine($"No hit at ({x}, {y}) for ship {shipName}");
                 }
             }
         }
@@ -998,25 +986,9 @@ namespace App.lib
                         objectiveMap[y + i, x + j] = 2; // Hit
                         if(objectiveMap == CPU.mapCPU){
                             UpdateShipState(y + i, x + j);
-                            if(weaponName == "Depth Charge"){
-                                settings.remainingWeaponUsage[2] = false;
-                                settings.rechargeTime[2] = 7000;
-                            }
-                            else{
-                                settings.remainingWeaponUsage[3] = false;
-                                settings.rechargeTime[3] = 7000;
-                            }
                         }
                         else if (objectiveMap == map){
                             CPU.UpdateShipStateCPU(y + i, x + j);
-                            if(weaponName == "Depth Charge"){
-                                settings.remainingWeaponUsageCPU[2] = false;
-                                settings.rechargeTimeCPU[2] = 7000;
-                            }
-                            else{
-                                settings.remainingWeaponUsage[3] = false;
-                                settings.rechargeTimeCPU[3] = 7000;
-                            }
                         }
                         // PrintShipState();
                     }
@@ -1026,8 +998,31 @@ namespace App.lib
                     }
                 }
             }
+
+            //Set the recharge time for the weapon (Depth Charge or Nuke)
+            if(objectiveMap == CPU.mapCPU){
+                if(weaponName == "Depth Charge"){
+                    settings.remainingWeaponUsage[2] = false;
+                    settings.rechargeTime[2] = 7000;
+                }
+                else{
+                    settings.remainingWeaponUsage[3] = false;
+                    settings.rechargeTime[3] = 7000;
+                }
+            }
+            else if (objectiveMap == map){
+                if(weaponName == "Depth Charge"){
+                    settings.remainingWeaponUsageCPU[2] = false;
+                    settings.rechargeTimeCPU[2] = 7000;
+                }
+                else{
+                    settings.remainingWeaponUsage[3] = false;
+                    settings.rechargeTimeCPU[3] = 7000;
+                }
+            }
         }
-        //TEST
+
+        //TEST - debuging
         // private void PrintShipState()
         // {
         //     foreach (KeyValuePair<string, bool[,]> state in CPU.shipStateCPU)
@@ -1048,20 +1043,20 @@ namespace App.lib
         //     PrintShipCoordinates();
         // }
 
-        private void PrintShipCoordinates()
-        {
-            foreach (KeyValuePair<string, List<(int, int)>> ship in CPU.shipPositionsMapCPU)
-            {
-                Console.WriteLine("Ship name: " + ship.Key);
-                List<(int, int)> shipPositions = ship.Value;
+        // private void PrintShipCoordinates()
+        // {
+        //     foreach (KeyValuePair<string, List<(int, int)>> ship in CPU.shipPositionsMapCPU)
+        //     {
+        //         Console.WriteLine("Ship name: " + ship.Key);
+        //         List<(int, int)> shipPositions = ship.Value;
 
-                foreach (var pos in shipPositions)
-                {
-                    Console.WriteLine($"({pos.Item1}, {pos.Item2})");
-                }
-                Console.WriteLine();
-            }
-        }
+        //         foreach (var pos in shipPositions)
+        //         {
+        //             Console.WriteLine($"({pos.Item1}, {pos.Item2})");
+        //         }
+        //         Console.WriteLine();
+        //     }
+        // }
 
         public void Torpedo(ref int[,] map, int x, int y){
             if (map[y, x] == 1)
@@ -1107,9 +1102,16 @@ namespace App.lib
                             }
                             break;
                         }
+                        else if(map[i, x] == 2)
+                        {
+                            map[i, x] = 2;
+                        }
+                        else if(map[i, x] == 3){
+                            map[i, x] = 3;
+                        }
                         else
                         {
-                            map[i, x] = 4; // Miss
+                            map[i, x] = 4;
                         }
                     }
                 }
@@ -1131,9 +1133,16 @@ namespace App.lib
                             }
                             break;
                         }
+                        else if(map[y, j] == 2)
+                        {
+                            map[y, j] = 2;
+                        }
+                        else if(map[y, j] == 3){
+                            map[y, j] = 3;
+                        }
                         else
                         {
-                            map[y, j] = 4; // Miss
+                            map[y, j] = 4;
                         }
                     }
                 }
@@ -1154,9 +1163,16 @@ namespace App.lib
                         }
                         break;
                     }
+                    else if(map[y, j] == 2)
+                    {
+                        map[y, j] = 2;
+                    }
+                    else if(map[y, j] == 3){
+                        map[y, j] = 3;
+                    }
                     else
                     {
-                        map[y, j] = 4; // Miss
+                        map[y, j] = 4;
                     }
                 }
             }
@@ -1176,9 +1192,16 @@ namespace App.lib
                         }
                         break;
                     }
+                    else if(map[i, x] == 2)
+                    {
+                        map[i, x] = 2;
+                    }
+                    else if(map[i, x] == 3){
+                        map[i, x] = 3;
+                    }
                     else
                     {
-                        map[i, x] = 4; // Miss
+                        map[i, x] = 4;
                     }
                 }
             }
@@ -1297,7 +1320,6 @@ namespace App.lib
             int width = Console.WindowWidth;
             int height = Console.WindowHeight;
 
-            // Get non-sensitive information
             string username = Environment.UserName;
             string machineName = Environment.MachineName;
             string osVersion = Environment.OSVersion.ToString();
@@ -1307,7 +1329,6 @@ namespace App.lib
             string userDomainName = Environment.UserDomainName;
             string ipAddress = GetLocalIPAddress();
 
-            // Extend the duration of the effect
             for (int frame = 0; frame < 20; frame++)
             {
                 for (int i = 0; i < height; i++)
@@ -1323,7 +1344,6 @@ namespace App.lib
                 Console.Clear();
             }
 
-            // Add a flashing warning message
             for (int flash = 0; flash < 5; flash++)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
