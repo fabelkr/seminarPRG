@@ -10,7 +10,6 @@ using System.Net.Sockets;
 using App.lib.Computer;
 using App.lib.RenderASCII;
 //TODO: testing testing and testing
-//TODO: Border check for scanner is retarded, fix required. Logs out of bounds even though it is inside (8x, 2y) on 10 X 10 map.
 //TODO: Add ASCII art for ships
 namespace App.lib
 {
@@ -478,7 +477,7 @@ namespace App.lib
             mapMasking = true;
             Atomic.StartGameMessage();
 
-            while (sunkenShipCounter < settings.shipSpecifications.Count || sunkenShipCounterCPU < settings.shipSpecifications.Count)
+            while (settings.shipSpecifications.Count >= sunkenShipCounter || settings.shipSpecifications.Count >= sunkenShipCounterCPU)
             {
                 if (turn){
                     
@@ -502,7 +501,22 @@ namespace App.lib
                             mapMasking = true;
                             PrintMap(ref CPU.mapCPU);
                         }
-
+                        if (sunkenShipCounterCPU == settings.shipSpecifications.Count)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("You have lost the game! Better luck next time!");
+                            Console.WriteLine("Press any key to exit the game.");
+                            Console.ReadKey();
+                            Environment.Exit(0);
+                        }
+                        else if (sunkenShipCounter == settings.shipSpecifications.Count)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("You have won the game! Congratulations!");
+                            Console.WriteLine("Press any key to exit the game.");
+                            Console.ReadKey();
+                            Environment.Exit(0);
+                        }
                         Console.WriteLine("Type 'map' to switch views or press Enter to continue.");
                         string input = Console.ReadLine();
 

@@ -177,7 +177,7 @@ namespace App.lib.Computer
                 Console.WriteLine("EMP is active");
                 chosenWeaponCPU = settings.weaponNames[0];
             }
-            else if(settings.difficulty == 1){
+            else{
                 //set strategic starting weapon for CPU
                 if(constructor.turnIndex < 3){
                     int startingWeapon = WeaponIndex.Next(1, 3);
@@ -261,133 +261,173 @@ namespace App.lib.Computer
                 Console.WriteLine($"Forbiden coordinates: ({forbiden.Item2}, {forbiden.Item1})");
             }
 
-            if(allHitCoordinates.Count == 0 || allHitCoordinates.All(coord => constructor.map[coord.Item1, coord.Item2] == 3)){
+            if(settings.difficulty == 1){
 
+                if(allHitCoordinates.Count == 0 || allHitCoordinates.All(coord => constructor.map[coord.Item1, coord.Item2] == 3)){
+
+                    do{
+                        xC = setShotCoordinatesCPU.Next(0, settings.mapWidth ?? 10);
+                        yC = setShotCoordinatesCPU.Next(0, settings.mapHeight ?? 10);
+                    }
+                    while (constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3 ||
+                        settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth ||
+                        settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight);
+                    valid = true;
+                }
+                else{
+                    valid = false;
+                    while (!valid)
+                    {
+                        // Print the entire allHitCoordinates list
+                        Console.WriteLine("All hit coordinates:");
+                        foreach (var coord in allHitCoordinates)
+                        {
+                            Console.WriteLine($"({coord.Item2}, {coord.Item1})");
+                        }
+
+                        // Iterate over the list of hit coordinates
+                        foreach (var hitCoordinate in allHitCoordinates)
+                        {
+
+                            int x = hitCoordinate.Item2;
+                            int y = hitCoordinate.Item1;
+
+                            // Check adjacent coordinates
+                            List<(int, int)> adjacentCoordinates = new List<(int, int)>
+                            {
+                                (x - 1, y), // Left
+                                (x + 1, y), // Right
+                                (x, y - 1), // Up
+                                (x, y + 1)  // Down
+                            };
+
+                            Console.WriteLine($"Checking adjacent coordinates for hit at ({x}, {y})");
+                            // Shuffle the adjacent coordinates
+                            adjacentCoordinates = adjacentCoordinates.OrderBy(a => setShotCoordinatesCPU.Next()).ToList();
+
+                            foreach (var coord in adjacentCoordinates)
+                            {
+                                int adjX = coord.Item1;
+                                int adjY = coord.Item2;
+
+                                if(constructor.map[adjY, adjX] == 3 || constructor.map[adjY, adjX] == 4 || constructor.map[adjY, adjX] == 2){
+                                    Console.WriteLine($"Adjacent coordinate ({adjX}, {adjY}) is not valid");
+                                    valid = false;
+                                    continue;
+                                }
+
+                                
+                                // Check the coordinates validity for the Depth Charge weapon in relation to the map boundaries
+                                if (weaponType == "Depth Charge")
+                                {
+                                    if (adjX >= 0 && adjX + 3 <= (settings.mapWidth ?? 10) && adjY >= 0 && adjY + 3 <= (settings.mapHeight ?? 10))
+                                    {
+                                        xC = adjX;
+                                        yC = adjY;
+                                        valid = true;
+                                        break;
+                                    }
+                                }
+                                // Check the coordinates validity for the Nuke weapon in relation to the map boundaries
+                                else if (weaponType == "Nuke"){
+                                    if (adjX >= 0 && adjX + 5 <= (settings.mapWidth ?? 10) && adjY >= 0 && adjY + 5 <= (settings.mapHeight ?? 10))
+                                    {
+                                        xC = adjX;
+                                        yC = adjY;
+                                        valid = true;
+                                        break;
+                                    }
+                                }
+                                // Check the coordinates validity for other weapons in relation to the map boundaries
+                                else if (adjX >= 0 && adjX <= (settings.mapWidth ?? 10) && adjY >= 0 && adjY <= (settings.mapHeight ?? 10))
+                                {
+                                    // Check if the adjacent coordinate has already been shot at
+                                    if (constructor.map[adjY, adjX] != 4 && constructor.map[adjY, adjX] != 2 && constructor.map[adjY, adjX] != 3 && !forbidenCoordinates.Contains((adjX, adjY)))
+                                    {
+                                        Console.WriteLine($"Valid adjacent coordinate found at ({adjX}, {adjY})");
+                                        // Set the shot coordinates to the adjacent coordinate
+                                        xC = adjX;
+                                        yC = adjY;
+                                        valid = true;
+                                        break;
+                                    }
+
+                                }
+                            }
+
+                            if (valid)
+                            {
+                                break;
+                            }
+                        }
+
+                        // If no valid adjacent coordinate is found, generate random coordinates
+                        if (!valid)
+                        {
+                            xC = setShotCoordinatesCPU.Next(0, settings.mapWidth ?? 10);
+                            yC = setShotCoordinatesCPU.Next(0, settings.mapHeight ?? 10);
+
+                            if (constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3)
+                            {
+                                continue;
+                            }
+                            else if (settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth || settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight)
+                            {
+                                continue;
+                            }
+                            else if (weaponType == "Torpedo" && (constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3 || constructor.map[xC, yC] == 4))
+                            {
+                                continue;
+                            }
+                            else if (weaponType == "Depth Charge" && xC >= 0 && xC + 3 < (settings.mapWidth ?? 10) && yC >= 0 && yC + 3 < (settings.mapHeight ?? 10))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                valid = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            else if(settings.difficulty == 2){
                 do{
                     xC = setShotCoordinatesCPU.Next(0, settings.mapWidth ?? 10);
                     yC = setShotCoordinatesCPU.Next(0, settings.mapHeight ?? 10);
                 }
                 while (constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3 ||
-                       settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth ||
-                       settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight);
+                    settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth ||
+                    settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight);
                 valid = true;
             }
-            else{
-                valid = false;
-                while (!valid)
+
+            else if (settings.difficulty == 3){
+                if(weaponType == "Missile"){
+                    weaponType = "Torpedo";
+                }
+                bool found = false;
+                for (int i = 0; i < (settings.mapWidth ?? 10); i++)
                 {
-                    // Print the entire allHitCoordinates list
-                    Console.WriteLine("All hit coordinates:");
-                    foreach (var coord in allHitCoordinates)
+                    for (int j = 0; j < (settings.mapHeight ?? 10); j++)
                     {
-                        Console.WriteLine($"({coord.Item2}, {coord.Item1})");
-                    }
-
-                    // Iterate over the list of hit coordinates
-                    foreach (var hitCoordinate in allHitCoordinates)
-                    {
-
-                        int x = hitCoordinate.Item2;
-                        int y = hitCoordinate.Item1;
-
-                        // Check adjacent coordinates
-                        List<(int, int)> adjacentCoordinates = new List<(int, int)>
+                        if (constructor.map[i, j] == 1)
                         {
-                            (x - 1, y), // Left
-                            (x + 1, y), // Right
-                            (x, y - 1), // Up
-                            (x, y + 1)  // Down
-                        };
-
-                        Console.WriteLine($"Checking adjacent coordinates for hit at ({x}, {y})");
-                        // Shuffle the adjacent coordinates
-                        adjacentCoordinates = adjacentCoordinates.OrderBy(a => setShotCoordinatesCPU.Next()).ToList();
-
-                        foreach (var coord in adjacentCoordinates)
-                        {
-                            int adjX = coord.Item1;
-                            int adjY = coord.Item2;
-
-                            if(constructor.map[adjY, adjX] == 3 || constructor.map[adjY, adjX] == 4 || constructor.map[adjY, adjX] == 2){
-                                Console.WriteLine($"Adjacent coordinate ({adjX}, {adjY}) is not valid");
-                                valid = false;
-                                continue;
-                            }
-
-                            
-                            // Check the coordinates validity for the Depth Charge weapon in relation to the map boundaries
-                            if (weaponType == "Depth Charge")
-                            {
-                                if (adjX >= 0 && adjX + 3 <= (settings.mapWidth ?? 10) && adjY >= 0 && adjY + 3 <= (settings.mapHeight ?? 10))
-                                {
-                                    xC = adjX;
-                                    yC = adjY;
-                                    valid = true;
-                                    break;
-                                }
-                            }
-                            // Check the coordinates validity for the Nuke weapon in relation to the map boundaries
-                            else if (weaponType == "Nuke"){
-                                if (adjX >= 0 && adjX + 5 <= (settings.mapWidth ?? 10) && adjY >= 0 && adjY + 5 <= (settings.mapHeight ?? 10))
-                                {
-                                    xC = adjX;
-                                    yC = adjY;
-                                    valid = true;
-                                    break;
-                                }
-                            }
-                            // Check the coordinates validity for other weapons in relation to the map boundaries
-                            else if (adjX >= 0 && adjX <= (settings.mapWidth ?? 10) && adjY >= 0 && adjY <= (settings.mapHeight ?? 10))
-                            {
-                                // Check if the adjacent coordinate has already been shot at
-                                if (constructor.map[adjY, adjX] != 4 && constructor.map[adjY, adjX] != 2 && constructor.map[adjY, adjX] != 3 && !forbidenCoordinates.Contains((adjX, adjY)))
-                                {
-                                    Console.WriteLine($"Valid adjacent coordinate found at ({adjX}, {adjY})");
-                                    // Set the shot coordinates to the adjacent coordinate
-                                    xC = adjX;
-                                    yC = adjY;
-                                    valid = true;
-                                    break;
-                                }
-
-                            }
-                        }
-
-                        if (valid)
-                        {
+                            xC = j;
+                            yC = i;
+                            found = true;
                             break;
                         }
                     }
-
-                    // If no valid adjacent coordinate is found, generate random coordinates
-                    if (!valid)
+                    if (found)
                     {
-                        xC = setShotCoordinatesCPU.Next(0, settings.mapWidth ?? 10);
-                        yC = setShotCoordinatesCPU.Next(0, settings.mapHeight ?? 10);
-
-                        if (constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3)
-                        {
-                            continue;
-                        }
-                        else if (settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth || settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight)
-                        {
-                            continue;
-                        }
-                        else if (weaponType == "Torpedo" && (constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3 || constructor.map[xC, yC] == 4))
-                        {
-                            continue;
-                        }
-                        else if (weaponType == "Depth Charge" && xC >= 0 && xC + 3 < (settings.mapWidth ?? 10) && yC >= 0 && yC + 3 < (settings.mapHeight ?? 10))
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            valid = true;
-                        }
+                        break;
                     }
                 }
+                valid = true;
             }
+
 
             if (weaponType == "Depth Charge")
             {
