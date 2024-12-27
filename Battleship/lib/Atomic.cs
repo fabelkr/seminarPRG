@@ -12,6 +12,7 @@ namespace App.lib
         {
             Console.WriteLine("\nPress any key to return to main menu");
             Console.ReadKey();
+            Console.ResetColor();
             Console.Clear();
         }
 

@@ -201,7 +201,7 @@ namespace App.lib
                 DisplayMapOptions();
                 DisplayDifficultyOptions();
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("3. Add or modificate your ships");
+                Console.WriteLine("3. Add or modify your ships");
                 DisplayColorThemeOptions();
                 if (mapType == null || difficulty == null || colorTheme == null)
                 {
@@ -613,10 +613,22 @@ namespace App.lib
                 case "1":
                     Console.WriteLine("Enter new width");
                     shipSizes[index, 0] = Convert.ToInt32(Console.ReadLine());
+                    if(shipSizes[index, 0] <= 0){
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("\nYou can not set a ship with a dimension higher or equal to 0");
+                        shipSizes[index, 0] = temp[0];
+                        Atomic.GameSettingsError();
+                    }
                     break;
                 case "2":
                     Console.WriteLine("Enter new height");
                     shipSizes[index, 1] = Convert.ToInt32(Console.ReadLine());
+                    if(shipSizes[index, 1] <= 0){
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("\nYou can not set a ship with a dimension higher or equal to 0");
+                        shipSizes[index, 1] = temp[1];
+                        Atomic.GameSettingsError();
+                    }
                     break;
                 default:
                     Console.WriteLine("\nYou selected an invalid option");
@@ -944,7 +956,6 @@ namespace App.lib
             }
             return true;
         }
-        //TODO: ship cannot have size in any direction less than 1
         //function that compares the ship dimensions with the map dimensions (It is similar as the CompareMapAndShipsLength function, but it is used for the map type circle and it works, so dont worry about it)
         private bool CompareLogicalDimensions(string shipType)
         {
