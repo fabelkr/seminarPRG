@@ -199,24 +199,20 @@ namespace App.lib
         public void CreateCircularMap(ref int[,] map)
         {
             int diameter = settings.mapDiameter ?? 20;
-            int radius = diameter / 2;
-
-            // Create 2D array to store the circular map
-            //null = water, false = ship, true = hit
             map = new int[diameter, diameter];
 
-            // Initialize the map with water ('~') like it was a square (rendering it as a circle is done in the section below)
-            for (int i = 0; i < diameter; i++)
+        // Initialize the map with water ('~') like it was a square
+        for (int i = 0; i < diameter; i++)
+        {
+            for (int j = 0; j < diameter; j++)
             {
-                for (int j = 0; j < diameter; j++)
-                {
-                    map[i, j] = 0;
-                }
+                map[i, j] = 0;
             }
+        }
 
             PrintMap(ref map);
         }
-
+        //TODO: Allow depthcharge and nuke to be used only on map, where it fits
         public void PrintMap(ref int[,] map)
         {
             int height = map.GetLength(0);
