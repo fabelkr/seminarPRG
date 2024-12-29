@@ -269,7 +269,8 @@ namespace App.lib.Computer
                         xC = setShotCoordinatesCPU.Next(0, settings.mapWidth ?? 10);
                         yC = setShotCoordinatesCPU.Next(0, settings.mapHeight ?? 10);
                     }
-                    while (constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3 ||
+                    while (xC >= (settings.mapWidth ?? 10) || yC >= (settings.mapHeight ?? 10) || 
+                        constructor.map[xC, yC] == 4 || constructor.map[xC, yC] == 2 || constructor.map[xC, yC] == 3 ||
                         settings.weaponSpecifications[weaponType][0] + xC > settings.mapWidth ||
                         settings.weaponSpecifications[weaponType][1] + yC > settings.mapHeight);
                     valid = true;
