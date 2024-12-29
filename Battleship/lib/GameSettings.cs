@@ -366,15 +366,17 @@ namespace App.lib
 
             if (mapHeight < 5 || mapWidth < 5 && weaponSpecifications.ContainsKey("Nuke"))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\nYou can not set a map with a dimension lower than 5 if you have Nuke included in the list");
                 mapHeight = 10;
                 mapWidth = 10;
                 Atomic.GameSettingsError();
             }
 
-            if (mapHeight < 3 || mapWidth < 3 && weaponSpecifications.ContainsKey("Depth charge"))
+            if (mapHeight < 3 || mapWidth < 3)
             {
-                Console.WriteLine("\nYou can not set a map with a dimension lower than 3 if you have Depth Charge included in the list");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\nYou can not set a map with a dimension lower than 3");
                 mapHeight = 10;
                 mapWidth = 10;
                 Atomic.GameSettingsError();

@@ -212,7 +212,6 @@ namespace App.lib
 
             PrintMap(ref map);
         }
-        //TODO: Allow depthcharge and nuke to be used only on map, where it fits
         public void PrintMap(ref int[,] map)
         {
             int height = map.GetLength(0);
