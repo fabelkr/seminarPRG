@@ -13,7 +13,7 @@ Welcome to the Battleship project! This is a console-based implementation of the
 
 ## Features
 - **Single Player Mode**: Play against the computer with different difficulty levels (easy, normal, hard).
-- **Customizable Map Size**: Adjust the size of the map to your preference (square or rectangle).
+- **Customizable Map Size**: Adjust the size of the map to your preference (square or rectangle) minimum size of a dimension is 3 and maximum is 50.
 - **Different Weapons**: Use various weapons like Torpedo, Missile, Depth Charge, Nuke, EMP and some more.
 - **Different Ships**: This game offers a lot of different ship types based on the real ships game and on the real naval units.
 - **Modifiable Ships**: Modify the sizes of your ships.
